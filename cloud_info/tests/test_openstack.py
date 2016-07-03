@@ -5,10 +5,10 @@ import unittest
 
 import mock
 
-from cloud_bdii import exceptions
-from cloud_bdii.providers import openstack as os_provider
-from cloud_bdii.tests import data
-from cloud_bdii.tests import utils as test_utils
+from cloud_info import exceptions
+from cloud_info.providers import openstack as os_provider
+from cloud_info.tests import data
+from cloud_info.tests import utils as test_utils
 
 FAKES = data.OS_FAKES
 
