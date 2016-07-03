@@ -19,6 +19,7 @@ BuildRequires: python-pbr
 Requires: python
 Requires: python-argparse
 Requires: python-yaml
+Requires: python-mako
 #Recommends: bdii
 #Recommends: python-novaclient
 BuildArch: noarch
