@@ -11,7 +11,7 @@ Release: 1%{?dist}
 Group: Applications/Internet
 License: ASL 2.0
 URL: https://github.com/gwarf/cloud-bdii-provider/tree/json_output
-Source: cloud-bdii-provider-json_output.zip
+Source: cloud-info-provider-indigo-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: python-setuptools
@@ -28,7 +28,7 @@ Information provider for Cloud Compute and Cloud Storage services for INDIGO
 The provider outputs JSON formatted information.
 
 %prep
-%setup -q -n cloud-bdii-provider-json_output
+%setup -q -n cloud-bdii-provider-%{version}
 
 %build
 
@@ -42,6 +42,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %{python_sitelib}/cloud_bdii*
+%{python_sitelib}/cloud_provider*
 /usr/bin/cloud-info-provider-indigo-service
 %config /etc/cloud-info-provider-indigo/
 
