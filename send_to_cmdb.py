@@ -23,8 +23,8 @@ class SendToCMDB(object):
         elif self.verbose:
             logging.basicConfig(level=logging.INFO)
 
-        self.remote_images = {}
-        self.local_images = {}
+        self.remote_images = []
+        self.local_images = []
 
 
     def retrieve_remote_images(self):
@@ -37,18 +37,20 @@ class SendToCMDB(object):
             json_answer = r.json()
             logging.debug(json_answer)
             json_images = json_answer["rows"]
-            logging.debug(json_images)
             logging.info("Found %s remote images" % len(json_images))
             if len(json_images) > 0:
                 for image in json_images:
+                    cmdb_image = {}
                     cmdb_image_id = image["id"]
-                    cmdb_image = {'cmdb_image_id': cmdb_image_id}
                     image_id = image["value"]["image_id"]
                     for key, val in image["value"].iteritems():
                         cmdb_image[key] = val
-                    self.remote_images[image_id] = cmdb_image
+                    cmdb_image['cmdb_image_id'] = cmdb_image_id
+                    cmdb_image['image_id'] = image_id
+                    logging.debug(cmdb_image)
+                    self.remote_images.append(cmdb_image)
             else:
-                logged.debug("No images for service %s" % self.service_id)
+                logging.debug("No images for service %s" % self.service_id)
         else:
             print "Unable to retrieve remote images: %s" % r.status_code
             sys.exit(1)
@@ -59,45 +61,48 @@ class SendToCMDB(object):
         json_input = ''
         for line in sys.stdin.readlines():
             json_input += line.rstrip('\n')
-        logging.debug(json_input)
         self.local_images = json.loads(json_input)
         logging.info("Found %s local images" % len(self.local_images))
+        logging.debug(json_input)
 
 
     def submit_image(self, image):
         image_name = image["image_name"]
         image_id = image["image_id"]
-        logging.info("Submitting image %s (%s)" % (image_name, image_id))
+        logging.info("Submitting %s (%s)" % (image_name, image_id))
 
 
     def purge_image(self, image):
         image_name = image["image_name"]
         image_id = image["image_id"]
-        logging.info("Purging remote image %s (%s)" % (image_name, image_id))
+        cmdb_image_id = image["cmdb_image_id"]
+        logging.info("Purging remote %s (%s): %s" % (image_name,
+                                                     image_id,
+                                                     cmdb_image_id))
 
 
     def update_remote_images(self):
         self.retrieve_remote_images()
         self.retrieve_local_images()
 
-        images_to_delete = []
-        images_to_update = self.remote_images
+        # TODO compute list of images
+        images_to_delete = self.remote_images
+        images_to_update = []
         images_to_add = self.local_images
 
         for image in images_to_add:
-            submit_image(image)
+            self.submit_image(image)
 
         for image in images_to_update:
             # XXX check if update might be preferable
-            purge_image(image)
-            submit_image(image)
+            self.purge_image(image)
+            self.submit_image(image)
 
         if self.delete_non_local_images:
             for image in images_to_delete:
-                purge_image(image)
+                self.purge_image(image)
         #r = requests.get(url, auth=(self.cmdb_auth))
 
-        logging.info("Updating remote images")
 
 def parse_opts():
     parser = argparse.ArgumentParser(
