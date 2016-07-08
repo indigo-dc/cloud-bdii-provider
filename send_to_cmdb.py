@@ -134,7 +134,6 @@ class SendToCMDB(object):
         if self.delete_non_local_images:
             for image in images_to_delete:
                 self.purge_image(image)
-        #r = requests.get(url, auth=(self.cmdb_auth))
 
 
 def parse_opts():
