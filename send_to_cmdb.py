@@ -85,6 +85,25 @@ class SendToCMDB(object):
         image['service'] = self.service_id
         logging.info("Submitting %s (%s)" % (image_name, image_id))
 
+        url = self.cmdb_write_url
+        headers = {'Content-Type': 'application/json'}
+        auth = self.cmdb_auth
+        # XXX json.loads use unicode string
+        # So convert unicode sting to byte strings
+        # See http://stackoverflow.com/questions/956867
+        data = '{"type":"image","data":%s}' % self._byteify(image)
+        # XXX couchdb expect JSON to use double quotes
+        data = data.replace("'", '"')
+        logging.debug(data)
+        r = requests.post(url, headers=headers, auth=auth, data=data)
+        if r.status_code == requests.codes.ok:
+            json_answer = r.json()
+            logging.info("Successfully imported image %s" % image_name)
+            logging.debug("Response %s" % r.text)
+        else:
+            logging.error("Unable to submit image: %s" % r.status_code)
+            logging.error("Response %s" % r.text)
+
 
     def purge_image(self, image):
         image_name = image["image_name"]
