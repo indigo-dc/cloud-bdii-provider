@@ -19,7 +19,7 @@ class SendToCMDB(object):
 
 
     def retrieve_remote_images(self):
-        print "Retrieving remote images"
+        # TODO retrieve service ID based on sitename
         url = "%s/service/id/%s/has_many/images" % (self.cmdb_read_url_base,
                                                     self.service_id)
         r = requests.get(url)
@@ -85,6 +85,7 @@ def parse_opts():
         required=True,
         help=('Password to use to contact the CMDB endpoint'))
 
+    # TODO replace by sitename
     parser.add_argument(
         '--service-id',
         required=True,
