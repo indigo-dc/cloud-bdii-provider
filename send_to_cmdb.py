@@ -67,6 +67,18 @@ class SendToCMDB(object):
         logging.debug(json_input)
 
 
+    def _byteify(self,input):
+        if isinstance(input, dict):
+            return {self._byteify(key): self._byteify(value)
+                    for key, value in input.iteritems()}
+        elif isinstance(input, list):
+            return [self._byteify(element) for element in input]
+        elif isinstance(input, unicode):
+            return input.encode('utf-8')
+        else:
+            return input
+
+
     def submit_image(self, image):
         image_name = image["image_name"]
         image_id = image["image_id"]
