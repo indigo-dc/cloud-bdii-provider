@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import logging
 import os.path
 import sys
 
@@ -16,16 +17,26 @@ class SendToCMDB(object):
         self.service_id = opts.service_id
         self.remote_images = {}
         self.local_images = {}
+        self.debug = opts.debug
+        self.verbose = opts.verbose
+        if self.debug:
+            logging.basicConfig(level=logging.DEBUG)
+        elif self.verbose:
+            logging.basicConfig(level=logging.INFO)
 
 
     def retrieve_remote_images(self):
+        logging.info("Retrieving remote images")
         # TODO retrieve service ID based on sitename
         url = "%s/service/id/%s/has_many/images" % (self.cmdb_read_url_base,
                                                     self.service_id)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             json_answer = r.json()
+            logging.debug(json_answer)
             json_images = json_answer["rows"]
+            logging.debug(json_images)
+            logging.info("Found %s remote images" % len(json_images))
             if len(json_images) > 0:
                 for image in json_images:
                     cmdb_image_id = image["id"]
@@ -35,27 +46,27 @@ class SendToCMDB(object):
                         cmdb_image[key] = val
                     self.remote_images[image_id] = cmdb_image
             else:
-                print "No images for service %s" % self.service_id
+                logged.debug("No images for service %s" % self.service_id)
         else:
             print "Unable to retrieve remote images: %s" % r.status_code
             sys.exit(1)
 
 
     def retrieve_local_images(self):
-        print "Retrieving local images"
+        logging.info("Retrieving local images")
         json_input = ''
         for line in sys.stdin.readlines():
             json_input += line.rstrip('\n')
+        logging.debug(json_input)
         self.local_images = json.loads(json_input)
-        print self.local_images
+        logging.info("Found %s local images" % len(self.local_images))
 
     def update_remote_images(self):
         self.retrieve_remote_images()
-        print self.remote_images
         self.retrieve_local_images()
         #r = requests.get(url, auth=(self.cmdb_auth))
 
-        print "Updating remote images"
+        logging.info("Updating remote images")
 
 def parse_opts():
     parser = argparse.ArgumentParser(
@@ -91,6 +102,16 @@ def parse_opts():
         required=True,
         help=('CMDB target service ID'
               'Images will be linked to this service ID'))
+
+    parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help=('Verbose output'))
+
+    parser.add_argument(
+        '--debug', '-d',
+        action='store_true',
+        help=('Debug output'))
 
     return parser.parse_args()
 
