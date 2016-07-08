@@ -82,6 +82,7 @@ class SendToCMDB(object):
     def submit_image(self, image):
         image_name = image["image_name"]
         image_id = image["image_id"]
+        image['service'] = self.service_id
         logging.info("Submitting %s (%s)" % (image_name, image_id))
 
 
