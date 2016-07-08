@@ -16,14 +16,15 @@ class SendToCMDB(object):
         self.cmdb_auth = (opts.cmdb_user, opts.cmdb_password)
         self.service_id = opts.service_id
         self.delete_non_local_images = opts.delete_non_local_images
-        self.remote_images = {}
-        self.local_images = {}
         self.debug = opts.debug
         self.verbose = opts.verbose
         if self.debug:
             logging.basicConfig(level=logging.DEBUG)
         elif self.verbose:
             logging.basicConfig(level=logging.INFO)
+
+        self.remote_images = {}
+        self.local_images = {}
 
 
     def retrieve_remote_images(self):
