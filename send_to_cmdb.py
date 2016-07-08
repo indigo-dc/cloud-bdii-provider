@@ -115,8 +115,8 @@ class SendToCMDB(object):
 
 
     def update_remote_images(self):
-        self.retrieve_remote_images()
         self.retrieve_local_images()
+        self.retrieve_remote_images()
 
         # TODO compute list of images
         images_to_delete = self.remote_images
