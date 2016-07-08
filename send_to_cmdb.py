@@ -63,10 +63,38 @@ class SendToCMDB(object):
         self.local_images = json.loads(json_input)
         logging.info("Found %s local images" % len(self.local_images))
 
+
+    def submit_image(self, image):
+        image_name = image["image_name"]
+        image_id = image["image_id"]
+        logging.info("Submitting image %s (%s)" % (image_name, image_id))
+
+
+    def purge_image(self, image):
+        image_name = image["image_name"]
+        image_id = image["image_id"]
+        logging.info("Purging remote image %s (%s)" % (image_name, image_id))
+
+
     def update_remote_images(self):
         self.retrieve_remote_images()
         self.retrieve_local_images()
 
+        images_to_delete = []
+        images_to_update = self.remote_images
+        images_to_add = self.local_images
+
+        for image in images_to_add:
+            submit_image(image)
+
+        for image in images_to_update:
+            # XXX check if update might be preferable
+            purge_image(image)
+            submit_image(image)
+
+        if self.delete_non_local_images:
+            for image in images_to_delete:
+                purge_image(image)
         #r = requests.get(url, auth=(self.cmdb_auth))
 
         logging.info("Updating remote images")
