@@ -61,7 +61,7 @@ class SendToCMDB(object):
         logging.info("Retrieving local images")
         json_input = ''
         for line in sys.stdin.readlines():
-            json_input += line.rstrip('\n')
+            json_input += line.strip().rstrip('\n')
         self.local_images = json.loads(json_input)
         logging.info("Found %s local images" % len(self.local_images))
         logging.debug(json_input)
