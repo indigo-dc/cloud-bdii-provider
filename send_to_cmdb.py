@@ -15,6 +15,7 @@ class SendToCMDB(object):
         self.cmdb_write_url_base = opts.cmdb_write_endpoint
         self.cmdb_auth = (opts.cmdb_user, opts.cmdb_password)
         self.service_id = opts.service_id
+        self.delete_non_local_images = opts.delete_non_local_images
         self.remote_images = {}
         self.local_images = {}
         self.debug = opts.debug
@@ -64,6 +65,7 @@ class SendToCMDB(object):
     def update_remote_images(self):
         self.retrieve_remote_images()
         self.retrieve_local_images()
+
         #r = requests.get(url, auth=(self.cmdb_auth))
 
         logging.info("Updating remote images")
@@ -102,6 +104,11 @@ def parse_opts():
         required=True,
         help=('CMDB target service ID'
               'Images will be linked to this service ID'))
+
+    parser.add_argument(
+        '--delete-non-local-images',
+        action='store_true',
+        help=('Delete images that are not present locally'))
 
     parser.add_argument(
         '--verbose', '-v',
