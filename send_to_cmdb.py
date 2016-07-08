@@ -12,7 +12,7 @@ class SendToCMDB(object):
     def __init__(self, opts):
         self.opts = opts
         self.cmdb_read_url_base = opts.cmdb_read_endpoint
-        self.cmdb_write_url_base = opts.cmdb_write_endpoint
+        self.cmdb_write_url = opts.cmdb_write_endpoint
         self.cmdb_auth = (opts.cmdb_user, opts.cmdb_password)
         self.service_id = opts.service_id
         self.delete_non_local_images = opts.delete_non_local_images
