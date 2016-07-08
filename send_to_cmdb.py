@@ -52,7 +52,8 @@ class SendToCMDB(object):
             else:
                 logging.debug("No images for service %s" % self.service_id)
         else:
-            print "Unable to retrieve remote images: %s" % r.status_code
+            logging.error("Unable to retrieve remote images: %s" % r.status_code)
+            logging.error("Response %s" % r.text)
             sys.exit(1)
 
 
