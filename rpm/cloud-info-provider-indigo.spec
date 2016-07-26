@@ -6,12 +6,12 @@
 
 Summary: Information provider for Cloud Compute and Cloud Storage services for INDIGO
 Name: cloud-info-provider-indigo
-Version: 0.6
+Version: 0.6.0
 Release: 1%{?dist}
 Group: Applications/Internet
 License: ASL 2.0
 URL: https://github.com/gwarf/cloud-bdii-provider/tree/json_output
-Source: cloud-info-provider-indigo-%{version}.tar.gz
+Source: cloud_provider_indigo-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: python-setuptools
@@ -29,7 +29,7 @@ Information provider for Cloud Compute and Cloud Storage services for INDIGO
 The provider outputs JSON formatted information.
 
 %prep
-%setup -q -n cloud-bdii-provider-%{version}
+%setup -q -n cloud_provider_indigo-%{version}
 
 %build
 
@@ -48,6 +48,6 @@ rm -rf $RPM_BUILD_ROOT
 %config /etc/cloud-info-provider-indigo/
 
 %changelog
-* Wed Jul 6 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.1-{%release}
+* Wed Jul 6 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.6.0-{%release}
 - First release
 - Based on cloud-info-provider.spec from EGI-FCTF/cloud-bdii-provider

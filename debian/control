@@ -1,4 +1,4 @@
-Source: python-cloud-info-provider
+Source: python-cloud-info-provider-indigo
 Section: net
 Priority: extra
 Maintainer: Enol Fernandez <enol.fernandez@egi.eu>
@@ -13,7 +13,7 @@ Standards-Version: 3.9.5
 Homepage: http://github.com/EGI-FCTF/BDIIscripts
 Vcs-Git: https://github.com/EGI-FCTF/BDIIscripts.git
 
-Package: python-cloud-info-provider
+Package: python-cloud-info-provider-indigo
 Architecture: all
 Section: python
 Depends: ${python:Depends}, ${misc:Depends},
@@ -21,10 +21,7 @@ Depends: ${python:Depends}, ${misc:Depends},
 Recommends: bdii
 Suggests: python-novaclient
 Provides: ${python:Provides}
-Description: Cloud information provider for BDII.
- Information provider for Cloud Compute and Cloud Storage services for BDII.
- .
- It supports static information specification, OpenNebula and OpenStack cloud
- middlewares.
- The provider uses GLUE 2.0 EGI Cloud Profile to publish the information.
+Description: Cloud information provider for INDIGO.
+ Information provider for Cloud Compute and Cloud Storage services for INDIGO
+ The provider outputs JSON formatted information.
 
