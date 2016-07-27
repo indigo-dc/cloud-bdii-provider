@@ -1,3 +1,9 @@
+python-cloud-info-provider-indigo (0.6.1) trusty; urgency=medium
+
+  * Update mako template to use fields added by java-syncrepo.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Wed, 27 Jul 2016 14:17:30 +0200
+
 python-cloud-info-provider-indigo (0.6) trusty; urgency=medium
 
   * First release with support of JSON for INDIGO.
