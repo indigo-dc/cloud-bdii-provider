@@ -1,53 +1,55 @@
-<% last_img_index = len(attributes["images"])-1 %>
+<% last_img_index = len(attributes["images"])-1 %>\
+[
 % for image_id, image in attributes["images"].iteritems():
+<%
+    if "dockerid" in image:
+        image_name = "%s:%s" % (image["dockername"], image["dockertag"])
+    elif "docker_id" in image:
+        image_name = "%s:%s" % (image["docker_name"], image["docker_tag"])
+    else:
+        image_name = image["image_name"]
+
+    if 'hw_architecture' in image:
+        arch = image["hw_architecture"]
+    elif 'architecture' in image:
+        arch = image["architecture"]
+    else:
+        arch = nil
+
+    if 'version' in image:
+        version = image["version"]
+    elif 'dist_version' in image:
+        version = image["dist_version"]
+    elif 'vmcatcher_event_hv_version' in image:
+        version = image["vmcatcher_event_hv_version"]
+    else:
+        version = nil
+%>\
 {
-  "image_id": "${image_id}",
-  ## Docker stuff
-  % if 'dockerid' in image:
-  "image_name": "${image["dockername"]}:${image["dockertag"]}",
-  "docker_id": "${image["dockerid"]}",
-  % else:
-  "image_name": "${image["image_name"]}",
-  % endif
+  "image_name": "${image_name}",
   % if 'vmcatcher_event_ad_mpuri' in image:
   "image_marketplace_id": "${image["vmcatcher_event_ad_mpuri"]}",
   % endif
   % if 'description' in image:
   "image_description": "${image["description"]}",
   % endif
-  ## Architecture
-  % if 'hw_architecture' in image:
-  "architecture": "${image["hw_architecture"]}",
-  % elif 'architecture' in image:
-  "architecture": "${image["architecture"]}",
-  % else:
-  "architecture": null,
+  % if arch is not UNDEFINED:
+  "architecture": "${arch}",
   % endif
-  ## OS type
   % if 'os' in image:
-  "type:" "${image["os"]}",
-  % else:
-  "type": null,
+  "type": "${image["os"]}",
   % endif
-  ## OS distribution
   % if 'distribution' in image:
   "distribution": "${image["distribution"]}",
-  % else:
-  "distribution": null,
   % endif
-  ## OS version
-  % if 'version' in image:
-  "version": "${image["version"]}"
-  % elif 'dist_version' in image:
-  "version": "${image["dist_version"]}"
-  % elif 'vmcatcher_event_hv_version' in image:
-  "version": "${image["vmcatcher_event_hv_version"]}"
-  % else:
-  "version": null
+  % if version is not UNDEFINED:
+  "version": "${version}",
   % endif
+  "image_id": "${image_id}"
   % if loop.index < last_img_index:
 },
   % else:
 }
 % endif
 % endfor
+]

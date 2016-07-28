@@ -1,3 +1,10 @@
+python-cloud-info-provider-indigo (0.7.0) trusty; urgency=medium
+
+  * Update mako template
+  * Add a script for registering images to CMDB
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Tue, 28 Jul 2016 18:17:30 +0200
+
 python-cloud-info-provider-indigo (0.6.1) trusty; urgency=medium
 
   * Update mako template to use fields added by java-syncrepo.

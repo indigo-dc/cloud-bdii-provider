@@ -1,7 +1,7 @@
 Source: python-cloud-info-provider-indigo
 Section: net
 Priority: extra
-Maintainer: Enol Fernandez <enol.fernandez@egi.eu>
+Maintainer: Baptiste Grenier <baptiste.grenier@egi.eu>
 Build-Depends:
  debhelper (>= 7.0.50),
  python-all (>= 2.6),
@@ -10,8 +10,8 @@ Build-Depends-Indep:
  python-pbr (>= 0.6),
  python-setuptools
 Standards-Version: 3.9.5
-Homepage: http://github.com/EGI-FCTF/BDIIscripts
-Vcs-Git: https://github.com/EGI-FCTF/BDIIscripts.git
+Homepage: http://github.com/indigo-dc/cloud-info-provider
+Vcs-Git: https://github.com/indigo-dc/cloud-info-provider.git
 
 Package: python-cloud-info-provider-indigo
 Architecture: all
@@ -24,4 +24,5 @@ Provides: ${python:Provides}
 Description: Cloud information provider for INDIGO.
  Information provider for Cloud Compute and Cloud Storage services for INDIGO
  The provider outputs JSON formatted information.
+ A script allowing to send data to INDIGO CMDB is providred.
 

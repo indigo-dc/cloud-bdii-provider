@@ -6,7 +6,7 @@
 
 Summary: Information provider for Cloud Compute and Cloud Storage services for INDIGO
 Name: cloud-info-provider-indigo
-Version: 0.6.1
+Version: 0.7.0
 Release: 1%{?dist}
 Group: Applications/Internet
 License: ASL 2.0
@@ -27,6 +27,7 @@ BuildArch: noarch
 %description
 Information provider for Cloud Compute and Cloud Storage services for INDIGO
 The provider outputs JSON formatted information.
+A script allowing to send data to INDIGO CMDB is providred.
 
 %prep
 %setup -q -n cloud_provider_indigo-%{version}
@@ -45,9 +46,13 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/cloud_info*
 %{python_sitelib}/cloud_provider*
 /usr/bin/cloud-info-provider-indigo-service
+/usr/bin/send-to-cmdb
 %config /etc/cloud-info-provider-indigo/
 
 %changelog
+* Thu Jul 28 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.7.0-{%release}
+- Update mako template
+- Add a script for registering images to CMDB
 * Wed Jul 27 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.6.1-{%release}
 - Update mako template to use fields added by java-syncrepo.
 * Wed Jul 6 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.6.0-{%release}
