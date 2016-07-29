@@ -20,6 +20,7 @@ Requires: python
 Requires: python-argparse
 Requires: python-yaml
 Requires: python-mako
+Requires: python-requests
 #Recommends: bdii
 #Recommends: python-novaclient
 BuildArch: noarch
