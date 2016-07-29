@@ -17,7 +17,7 @@ Package: python-cloud-info-provider-indigo
 Architecture: all
 Section: python
 Depends: ${python:Depends}, ${misc:Depends},
- python-yaml
+ python-yaml, python-requests, python-mako
 Recommends: bdii
 Suggests: python-novaclient
 Provides: ${python:Provides}

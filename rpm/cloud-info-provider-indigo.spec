@@ -6,7 +6,7 @@
 
 Summary: Information provider for Cloud Compute and Cloud Storage services for INDIGO
 Name: cloud-info-provider-indigo
-Version: 0.8.0
+Version: 0.8.1
 Release: 1%{?dist}
 Group: Applications/Internet
 License: ASL 2.0
@@ -20,6 +20,7 @@ Requires: python
 Requires: python-argparse
 Requires: python-yaml
 Requires: python-mako
+Requires: python-requests
 #Recommends: bdii
 #Recommends: python-novaclient
 BuildArch: noarch
@@ -50,8 +51,10 @@ rm -rf $RPM_BUILD_ROOT
 %config /etc/cloud-info-provider-indigo/
 
 %changelog
+* Fri Jul 29 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.1-{%release}
+- Add missing dependencies
 * Fri Jul 29 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.0-{%release}
-  * Implement deletion of old images once a new one has been uploaded.
+- Implement deletion of old images once a new one has been uploaded.
 * Thu Jul 28 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.7.0-{%release}
 - Update mako template
 - Add a script for registering images to CMDB

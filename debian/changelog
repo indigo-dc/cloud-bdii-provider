@@ -1,3 +1,9 @@
+python-cloud-info-provider-indigo (0.8.1) trusty; urgency=medium
+
+  * Add missing dependencies.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Fri, 29 Jul 2016 16:57:30 +0200
+
 python-cloud-info-provider-indigo (0.8.0) trusty; urgency=medium
 
   * Implement deletion of old images once a new one has been uploaded.
