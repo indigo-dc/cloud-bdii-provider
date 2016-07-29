@@ -55,12 +55,14 @@ class SendToCMDB(object):
     def retrieve_remote_service_images(self, image_id):
         service_images = []
         # Find all images having the same name
-        # XXX filters/image_name does not allow to use name containing :
-        # So lookup all of images of the service and check them all
         # TODO(Ask for a way to use : or to search using local image_id)
-        #img_name = urllib.quote(image_name)
-        #url = "%s/image/filters/image_name/%s" % (self.cmdb_read_url_base, img_name)
-        url = "%s/image/filters/service/%s" % (self.cmdb_read_url_base, self.service_id)
+        # XXX filters/image_name does not allow to use name containing :
+        # img_name = urllib.quote(image_name)
+        # url = "%s/image/filters/image_name/%s" % (self.cmdb_read_url_base,
+        #                                           img_name)
+        # So lookup all of images of the service and check them all
+        url = "%s/image/filters/service/%s" % (self.cmdb_read_url_base,
+                                               self.service_id)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             json_answer = r.json()
@@ -68,13 +70,12 @@ class SendToCMDB(object):
             json_images = json_answer["rows"]
             if len(json_images) > 0:
                 for img in json_images:
-                  cmdb_img_id = img['id']
-                  img_id = img['value']['image_id']
-                  if img_id == image_id:
-                      service_images.append(img)
+                    img_id = img['value']['image_id']
+                    if img_id == image_id:
+                        service_images.append(img)
                 return service_images
             else:
-                logging.debug("No images for image_name %s" % image_name)
+                logging.debug("No images for image_id %s" % image_id)
         else:
             logging.error("Unable to query remote images: %s" %
                           r.status_code)
@@ -141,7 +142,6 @@ class SendToCMDB(object):
 
     def submit_image(self, image):
         image_name = image["image_name"]
-        image_id = image["image_id"]
         image['service'] = self.service_id
 
         url = self.cmdb_write_url
@@ -161,7 +161,8 @@ class SendToCMDB(object):
             logging.debug(json_answer)
             cmdb_image_id = json_answer['id']
             image_rev = json_answer['rev']
-            logging.info("Successfully imported image %s as %s rev %s" % (image_name, cmdb_image_id, image_rev))
+            logging.info("Successfully imported image %s as %s rev %s" %
+                         (image_name, cmdb_image_id, image_rev))
             self.purge_image_old_revisions(image, cmdb_image_id)
         else:
             logging.error("Unable to submit image: %s" % r.status_code)
@@ -174,10 +175,10 @@ class SendToCMDB(object):
         images = self.retrieve_remote_service_images(image_id)
         for img in images:
             cmdb_img_id = img['id']
-            img_id = img['value']['image_id']
             img_found = self.retrieve_remote_image(cmdb_img_id)
             rev = img_found['_rev']
-            logging.debug("Found revision %s for image %s with id %s" % (rev, image_name, cmdb_img_id))
+            logging.debug("Found revision %s for image %s with id %s" %
+                          (rev, image_name, cmdb_img_id))
             # keep latest image!
             if cmdb_img_id != cmdb_image_id:
                 # delete old revision
@@ -191,7 +192,8 @@ class SendToCMDB(object):
         r = requests.delete(url, headers=headers, auth=auth)
         if r.status_code == requests.codes.ok:
             logging.debug("Response %s" % r.text)
-            logging.info("Deleted image %s, with id %s and rev %s" % (image_name, cmdb_id, rev))
+            logging.info("Deleted image %s, with id %s and rev %s" %
+                         (image_name, cmdb_id, rev))
         else:
             logging.error("Unable to delete image: %s" % r.status_code)
             logging.error("Response %s" % r.text)
