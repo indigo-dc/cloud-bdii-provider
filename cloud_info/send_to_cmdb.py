@@ -14,7 +14,7 @@ class SendToCMDB(object):
         self.cmdb_read_url_base = opts.cmdb_read_endpoint
         self.cmdb_write_url = opts.cmdb_write_endpoint
         self.cmdb_auth = (opts.cmdb_user, opts.cmdb_password)
-        self.service_id = opts.service_id
+        self.sitename = opts.sitename
         self.delete_non_local_images = opts.delete_non_local_images
         self.debug = opts.debug
         self.verbose = opts.verbose
@@ -23,12 +23,32 @@ class SendToCMDB(object):
         elif self.verbose:
             logging.basicConfig(level=logging.INFO)
 
+        self.service_id = None
         self.remote_images = []
         self.local_images = []
 
+    def retrieve_service_id(self):
+        logging.info("Retrieving remote images")
+        url = "%s/service/filters/sitename/%s" % (self.cmdb_read_url_base,
+                                                  self.sitename)
+        r = requests.get(url)
+        if r.status_code == requests.codes.ok:
+            json_answer = r.json()
+            logging.debug(json_answer)
+            services = json_answer['rows']
+            if len(services) > 1:
+                logging.error("Multiple services found for %s" % self.sitename)
+                sys.exit(1)
+            else:
+                self.service_id = json_answer['rows'][0]['id']
+        else:
+            logging.error("Unable to retrieve service ID: %s" %
+                          r.status_code)
+            logging.error("Response %s" % r.text)
+            sys.exit(1)
+
     def retrieve_remote_images(self):
         logging.info("Retrieving remote images")
-        # TODO(retrieve service ID based on sitename)
         url = "%s/service/id/%s/has_many/images" % (self.cmdb_read_url_base,
                                                     self.service_id)
         r = requests.get(url)
@@ -158,12 +178,11 @@ def parse_opts():
         required=True,
         help=('Password to use to contact the CMDB endpoint'))
 
-    # TODO(replace by sitename)
     parser.add_argument(
-        '--service-id',
+        '--sitename',
         required=True,
-        help=('CMDB target service ID'
-              'Images will be linked to this service ID'))
+        help=('CMDB target site name'
+              'Images will be linked to the corresponding service ID'))
 
     parser.add_argument(
         '--delete-non-local-images',
@@ -187,6 +206,7 @@ def main():
     opts = parse_opts()
 
     sender = SendToCMDB(opts)
+    sender.retrieve_service_id()
     sender.update_remote_images()
 
 
