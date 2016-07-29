@@ -41,6 +41,8 @@ class SendToCMDB(object):
                 sys.exit(1)
             else:
                 self.service_id = json_answer['rows'][0]['id']
+                logging.info("Service ID for sitename %s is %s" %
+                             (self.sitename, self.service_id))
         else:
             logging.error("Unable to retrieve service ID: %s" %
                           r.status_code)
