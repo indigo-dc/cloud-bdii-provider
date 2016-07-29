@@ -32,7 +32,6 @@ class SendToCMDB(object):
         self.local_images = []
 
     def retrieve_service_id(self):
-        logging.info("Retrieving remote images")
         url = "%s/service/filters/sitename/%s" % (self.cmdb_read_url_base,
                                                   self.sitename)
         r = requests.get(url)
@@ -45,7 +44,7 @@ class SendToCMDB(object):
                 sys.exit(1)
             else:
                 self.service_id = json_answer['rows'][0]['id']
-                logging.info("Service ID for sitename %s is %s" %
+                logging.info("Service ID for %s is %s" %
                              (self.sitename, self.service_id))
         else:
             logging.error("Unable to retrieve service ID: %s" %
@@ -94,7 +93,6 @@ class SendToCMDB(object):
             logging.error("Response %s" % r.text)
 
     def retrieve_remote_images(self):
-        logging.info("Retrieving remote images")
         url = "%s/service/id/%s/has_many/images" % (self.cmdb_read_url_base,
                                                     self.service_id)
         r = requests.get(url)
@@ -123,7 +121,6 @@ class SendToCMDB(object):
             sys.exit(1)
 
     def retrieve_local_images(self):
-        logging.info("Retrieving local images")
         json_input = ''
         for line in sys.stdin.readlines():
             json_input += line.strip().rstrip('\n')
@@ -146,7 +143,6 @@ class SendToCMDB(object):
         image_name = image["image_name"]
         image_id = image["image_id"]
         image['service'] = self.service_id
-        logging.info("Submitting %s (%s)" % (image_name, image_id))
 
         url = self.cmdb_write_url
         headers = {'Content-Type': 'application/json'}
@@ -184,13 +180,11 @@ class SendToCMDB(object):
             logging.debug("Found revision %s for image %s with id %s" % (rev, image_name, cmdb_img_id))
             # keep latest image!
             if cmdb_img_id != cmdb_image_id:
-                logging.info("Found old revision %s for image %s with id %s" % (rev, image_name, cmdb_img_id))
                 # delete old revision
                 self.purge_image(image_name, cmdb_img_id, rev)
 
     def purge_image(self, image_name, cmdb_id, rev):
         url = "%s/%s?rev=%s" % (self.cmdb_write_url, cmdb_id, rev)
-        logging.info("Deleting image %s, with id %s and rev %s" % (image_name, cmdb_id, rev))
         logging.debug(url)
         headers = {'Content-Type': 'application/json'}
         auth = self.cmdb_auth
