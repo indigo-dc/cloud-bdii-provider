@@ -93,7 +93,7 @@ class SendToCMDB(object):
         data = data.replace("'", '"')
         logging.debug(data)
         r = requests.post(url, headers=headers, auth=auth, data=data)
-        if r.status_code == requests.codes.ok:
+        if r.status_code == requests.codes.created:
             logging.info("Successfully imported image %s" % image_name)
             logging.debug("Response %s" % r.text)
         else:
