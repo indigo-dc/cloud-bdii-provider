@@ -20,8 +20,12 @@ class SendToCMDB(object):
         self.verbose = opts.verbose
         if self.debug:
             logging.basicConfig(level=logging.DEBUG)
+            logging.getLogger('requests').setLevel(logging.DEBUG)
+            logging.getLogger('urllib3').setLevel(logging.DEBUG)
         elif self.verbose:
             logging.basicConfig(level=logging.INFO)
+            logging.getLogger('requests').setLevel(logging.WARNING)
+            logging.getLogger('urllib3').setLevel(logging.WARNING)
 
         self.service_id = None
         self.remote_images = []
