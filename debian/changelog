@@ -1,3 +1,9 @@
+python-cloud-info-provider-indigo (0.8.0) trusty; urgency=medium
+
+  * Implement deletion of old images once a new one has been uploaded.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Fri, 29 Jul 2016 15:17:30 +0200
+
 python-cloud-info-provider-indigo (0.7.0) trusty; urgency=medium
 
   * Update mako template

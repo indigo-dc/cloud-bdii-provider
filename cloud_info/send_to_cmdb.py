@@ -20,8 +20,12 @@ class SendToCMDB(object):
         self.verbose = opts.verbose
         if self.debug:
             logging.basicConfig(level=logging.DEBUG)
+            logging.getLogger('requests').setLevel(logging.DEBUG)
+            logging.getLogger('urllib3').setLevel(logging.DEBUG)
         elif self.verbose:
             logging.basicConfig(level=logging.INFO)
+            logging.getLogger('requests').setLevel(logging.WARNING)
+            logging.getLogger('urllib3').setLevel(logging.WARNING)
 
         self.service_id = None
         self.remote_images = []
@@ -48,6 +52,46 @@ class SendToCMDB(object):
                           r.status_code)
             logging.error("Response %s" % r.text)
             sys.exit(1)
+
+    def retrieve_remote_service_images(self, image_id):
+        service_images = []
+        # Find all images having the same name
+        # XXX filters/image_name does not allow to use name containing :
+        # So lookup all of images of the service and check them all
+        # TODO(Ask for a way to use : or to search using local image_id)
+        #img_name = urllib.quote(image_name)
+        #url = "%s/image/filters/image_name/%s" % (self.cmdb_read_url_base, img_name)
+        url = "%s/image/filters/service/%s" % (self.cmdb_read_url_base, self.service_id)
+        r = requests.get(url)
+        if r.status_code == requests.codes.ok:
+            json_answer = r.json()
+            logging.debug(json_answer)
+            json_images = json_answer["rows"]
+            if len(json_images) > 0:
+                for img in json_images:
+                  cmdb_img_id = img['id']
+                  img_id = img['value']['image_id']
+                  if img_id == image_id:
+                      service_images.append(img)
+                return service_images
+            else:
+                logging.debug("No images for image_name %s" % image_name)
+        else:
+            logging.error("Unable to query remote images: %s" %
+                          r.status_code)
+            logging.error("Response %s" % r.text)
+
+    def retrieve_remote_image(self, cmdb_image_id):
+        url = "%s/image/id/%s" % (self.cmdb_read_url_base, cmdb_image_id)
+        r = requests.get(url)
+        if r.status_code == requests.codes.ok:
+            img_json_answer = r.json()
+            logging.debug(img_json_answer)
+            return img_json_answer
+        else:
+            logging.error("Unable to query remote image: %s" %
+                          r.status_code)
+            logging.error("Response %s" % r.text)
 
     def retrieve_remote_images(self):
         logging.info("Retrieving remote images")
@@ -116,19 +160,47 @@ class SendToCMDB(object):
         logging.debug(data)
         r = requests.post(url, headers=headers, auth=auth, data=data)
         if r.status_code == requests.codes.created:
-            logging.info("Successfully imported image %s" % image_name)
             logging.debug("Response %s" % r.text)
+            json_answer = r.json()
+            logging.debug(json_answer)
+            cmdb_image_id = json_answer['id']
+            image_rev = json_answer['rev']
+            logging.info("Successfully imported image %s as %s rev %s" % (image_name, cmdb_image_id, image_rev))
+            self.purge_image_old_revisions(image, cmdb_image_id)
         else:
             logging.error("Unable to submit image: %s" % r.status_code)
             logging.error("Response %s" % r.text)
 
-    def purge_image(self, image):
-        image_name = image["image_name"]
-        image_id = image["image_id"]
-        cmdb_image_id = image["cmdb_image_id"]
-        logging.info("Purging remote %s (%s): %s" % (image_name,
-                                                     image_id,
-                                                     cmdb_image_id))
+    def purge_image_old_revisions(self, image, cmdb_image_id):
+        image_name = image['image_name']
+        image_id = image['image_id']
+        # Find all images having the same id
+        images = self.retrieve_remote_service_images(image_id)
+        for img in images:
+            cmdb_img_id = img['id']
+            img_id = img['value']['image_id']
+            img_found = self.retrieve_remote_image(cmdb_img_id)
+            rev = img_found['_rev']
+            logging.debug("Found revision %s for image %s with id %s" % (rev, image_name, cmdb_img_id))
+            # keep latest image!
+            if cmdb_img_id != cmdb_image_id:
+                logging.info("Found old revision %s for image %s with id %s" % (rev, image_name, cmdb_img_id))
+                # delete old revision
+                self.purge_image(image_name, cmdb_img_id, rev)
+
+    def purge_image(self, image_name, cmdb_id, rev):
+        url = "%s/%s?rev=%s" % (self.cmdb_write_url, cmdb_id, rev)
+        logging.info("Deleting image %s, with id %s and rev %s" % (image_name, cmdb_id, rev))
+        logging.debug(url)
+        headers = {'Content-Type': 'application/json'}
+        auth = self.cmdb_auth
+        r = requests.delete(url, headers=headers, auth=auth)
+        if r.status_code == requests.codes.ok:
+            logging.debug("Response %s" % r.text)
+            logging.info("Deleted image %s, with id %s and rev %s" % (image_name, cmdb_id, rev))
+        else:
+            logging.error("Unable to delete image: %s" % r.status_code)
+            logging.error("Response %s" % r.text)
 
     def update_remote_images(self):
         self.retrieve_local_images()
