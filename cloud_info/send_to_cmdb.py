@@ -3,10 +3,10 @@
 import argparse
 import json
 import logging
-import os.path
 import sys
 
 import requests
+
 
 class SendToCMDB(object):
     def __init__(self, opts):
@@ -14,7 +14,7 @@ class SendToCMDB(object):
         self.cmdb_read_url_base = opts.cmdb_read_endpoint
         self.cmdb_write_url = opts.cmdb_write_endpoint
         self.cmdb_auth = (opts.cmdb_user, opts.cmdb_password)
-        self.service_id = opts.service_id
+        self.sitename = opts.sitename
         self.delete_non_local_images = opts.delete_non_local_images
         self.debug = opts.debug
         self.verbose = opts.verbose
@@ -23,13 +23,34 @@ class SendToCMDB(object):
         elif self.verbose:
             logging.basicConfig(level=logging.INFO)
 
+        self.service_id = None
         self.remote_images = []
         self.local_images = []
 
+    def retrieve_service_id(self):
+        logging.info("Retrieving remote images")
+        url = "%s/service/filters/sitename/%s" % (self.cmdb_read_url_base,
+                                                  self.sitename)
+        r = requests.get(url)
+        if r.status_code == requests.codes.ok:
+            json_answer = r.json()
+            logging.debug(json_answer)
+            services = json_answer['rows']
+            if len(services) > 1:
+                logging.error("Multiple services found for %s" % self.sitename)
+                sys.exit(1)
+            else:
+                self.service_id = json_answer['rows'][0]['id']
+                logging.info("Service ID for sitename %s is %s" %
+                             (self.sitename, self.service_id))
+        else:
+            logging.error("Unable to retrieve service ID: %s" %
+                          r.status_code)
+            logging.error("Response %s" % r.text)
+            sys.exit(1)
 
     def retrieve_remote_images(self):
         logging.info("Retrieving remote images")
-        # TODO retrieve service ID based on sitename
         url = "%s/service/id/%s/has_many/images" % (self.cmdb_read_url_base,
                                                     self.service_id)
         r = requests.get(url)
@@ -52,10 +73,10 @@ class SendToCMDB(object):
             else:
                 logging.debug("No images for service %s" % self.service_id)
         else:
-            logging.error("Unable to retrieve remote images: %s" % r.status_code)
+            logging.error("Unable to retrieve remote images: %s" %
+                          r.status_code)
             logging.error("Response %s" % r.text)
             sys.exit(1)
-
 
     def retrieve_local_images(self):
         logging.info("Retrieving local images")
@@ -66,8 +87,7 @@ class SendToCMDB(object):
         logging.info("Found %s local images" % len(self.local_images))
         logging.debug(json_input)
 
-
-    def _byteify(self,input):
+    def _byteify(self, input):
         if isinstance(input, dict):
             return {self._byteify(key): self._byteify(value)
                     for key, value in input.iteritems()}
@@ -77,7 +97,6 @@ class SendToCMDB(object):
             return input.encode('utf-8')
         else:
             return input
-
 
     def submit_image(self, image):
         image_name = image["image_name"]
@@ -96,14 +115,12 @@ class SendToCMDB(object):
         data = data.replace("'", '"')
         logging.debug(data)
         r = requests.post(url, headers=headers, auth=auth, data=data)
-        if r.status_code == requests.codes.ok:
-            json_answer = r.json()
+        if r.status_code == requests.codes.created:
             logging.info("Successfully imported image %s" % image_name)
             logging.debug("Response %s" % r.text)
         else:
             logging.error("Unable to submit image: %s" % r.status_code)
             logging.error("Response %s" % r.text)
-
 
     def purge_image(self, image):
         image_name = image["image_name"]
@@ -113,12 +130,11 @@ class SendToCMDB(object):
                                                      image_id,
                                                      cmdb_image_id))
 
-
     def update_remote_images(self):
         self.retrieve_local_images()
         self.retrieve_remote_images()
 
-        # TODO compute list of images
+        # TODO(compute list of images)
         images_to_delete = self.remote_images
         images_to_update = []
         images_to_add = self.local_images
@@ -164,12 +180,11 @@ def parse_opts():
         required=True,
         help=('Password to use to contact the CMDB endpoint'))
 
-    # TODO replace by sitename
     parser.add_argument(
-        '--service-id',
+        '--sitename',
         required=True,
-        help=('CMDB target service ID'
-              'Images will be linked to this service ID'))
+        help=('CMDB target site name'
+              'Images will be linked to the corresponding service ID'))
 
     parser.add_argument(
         '--delete-non-local-images',
@@ -193,6 +208,7 @@ def main():
     opts = parse_opts()
 
     sender = SendToCMDB(opts)
+    sender.retrieve_service_id()
     sender.update_remote_images()
 
 
