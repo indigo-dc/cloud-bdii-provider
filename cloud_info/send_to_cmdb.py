@@ -3,10 +3,10 @@
 import argparse
 import json
 import logging
-import os.path
 import sys
 
 import requests
+
 
 class SendToCMDB(object):
     def __init__(self, opts):
@@ -26,10 +26,9 @@ class SendToCMDB(object):
         self.remote_images = []
         self.local_images = []
 
-
     def retrieve_remote_images(self):
         logging.info("Retrieving remote images")
-        # TODO retrieve service ID based on sitename
+        # TODO(retrieve service ID based on sitename)
         url = "%s/service/id/%s/has_many/images" % (self.cmdb_read_url_base,
                                                     self.service_id)
         r = requests.get(url)
@@ -52,10 +51,10 @@ class SendToCMDB(object):
             else:
                 logging.debug("No images for service %s" % self.service_id)
         else:
-            logging.error("Unable to retrieve remote images: %s" % r.status_code)
+            logging.error("Unable to retrieve remote images: %s" %
+                          r.status_code)
             logging.error("Response %s" % r.text)
             sys.exit(1)
-
 
     def retrieve_local_images(self):
         logging.info("Retrieving local images")
@@ -66,8 +65,7 @@ class SendToCMDB(object):
         logging.info("Found %s local images" % len(self.local_images))
         logging.debug(json_input)
 
-
-    def _byteify(self,input):
+    def _byteify(self, input):
         if isinstance(input, dict):
             return {self._byteify(key): self._byteify(value)
                     for key, value in input.iteritems()}
@@ -77,7 +75,6 @@ class SendToCMDB(object):
             return input.encode('utf-8')
         else:
             return input
-
 
     def submit_image(self, image):
         image_name = image["image_name"]
@@ -97,13 +94,11 @@ class SendToCMDB(object):
         logging.debug(data)
         r = requests.post(url, headers=headers, auth=auth, data=data)
         if r.status_code == requests.codes.ok:
-            json_answer = r.json()
             logging.info("Successfully imported image %s" % image_name)
             logging.debug("Response %s" % r.text)
         else:
             logging.error("Unable to submit image: %s" % r.status_code)
             logging.error("Response %s" % r.text)
-
 
     def purge_image(self, image):
         image_name = image["image_name"]
@@ -113,12 +108,11 @@ class SendToCMDB(object):
                                                      image_id,
                                                      cmdb_image_id))
 
-
     def update_remote_images(self):
         self.retrieve_local_images()
         self.retrieve_remote_images()
 
-        # TODO compute list of images
+        # TODO(compute list of images)
         images_to_delete = self.remote_images
         images_to_update = []
         images_to_add = self.local_images
@@ -164,7 +158,7 @@ def parse_opts():
         required=True,
         help=('Password to use to contact the CMDB endpoint'))
 
-    # TODO replace by sitename
+    # TODO(replace by sitename)
     parser.add_argument(
         '--service-id',
         required=True,
