@@ -190,7 +190,7 @@ class CloudBDII(BaseBDII):
 
 def parse_opts():
     parser = argparse.ArgumentParser(
-        description='Cloud information provider',
+        description='Cloud Information provider',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         fromfile_prefix_chars='@',
         conflict_handler="resolve",
