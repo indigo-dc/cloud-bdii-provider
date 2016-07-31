@@ -19,6 +19,14 @@ site:
     name: TEST
 
 compute:
+    endpoints:
+        defaults:
+            api_authn_method: User/Password
+            production_level: production
+            api_type: ON-XML-RPC
+            api_version: 2
+            api_endpoint_technology: REST
+        https://localhost:2633/RPC2:
     images:
         defaults:
             # Set to False or comment the line below if you want to show
