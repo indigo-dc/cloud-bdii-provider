@@ -11,7 +11,7 @@ Release: 1%{?dist}
 Group: Applications/Internet
 License: ASL 2.0
 URL: https://github.com/gwarf/cloud-bdii-provider/tree/json_output
-Source: cloud_provider_indigo-%{version}.tar.gz
+Source: cloud_info_provider_indigo-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: python-setuptools
@@ -32,7 +32,7 @@ The provider outputs JSON formatted information.
 A script allowing to send data to INDIGO CMDB is providred.
 
 %prep
-%setup -q -n cloud_provider_indigo-%{version}
+%setup -q -n cloud_info_provider_indigo-%{version}
 
 %build
 
@@ -46,7 +46,6 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %{python_sitelib}/cloud_info*
-%{python_sitelib}/cloud_provider*
 /usr/bin/cloud-info-provider-indigo-service
 /usr/bin/send-to-cmdb
 %config /etc/cloud-info-provider-indigo/
