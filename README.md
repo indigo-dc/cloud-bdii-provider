@@ -47,15 +47,15 @@ pip install .
 
 Depending on the template used output can range from JSON to LDIF.
 
-The ```--template-extension``` (default: indigo) allows to select different
+The ```--template-extension``` (default: ```indigo```) allows to select different
 templates based on thier file extension.
 Templates should be available inside the directory ```--template-dir```
-(default: /etc/cloud-info-provider-indigo/templates)
+(default: ```/etc/cloud-info-provider-indigo/templates```)
 
-The ```--yaml-file``` (default /etc/cloud-info-provider/static.yaml``` allows
+The ```--yaml-file``` (default ```/etc/cloud-info-provider/static.yaml``` allows
 to set some static values (see sample.static.yaml for a complete example with comments).
 
-Simple example of /etc/cloud-info-provider/static.yaml:
+Simple example of ```/etc/cloud-info-provider/static.yaml```:
 
 ``` yaml
 site:
@@ -97,10 +97,6 @@ cloud-info-provider-indigo-service --middleware indigoon \
   --on-rpcxml-endpoint <rpc-xml-endpoint>
 ```
 
-Use ```cloud-info-provider-indigo-service --help``` to see the list of available options.
-
-**Test the generation of the output before importing the provider output to the CMDB!**
-
 ## Running the provider in a cloud resource middleware
 
 This is the normal deployment mode for the cloud provider. It should be installed
@@ -133,3 +129,5 @@ cloud-info-provider-indigo-service --middleware openstack \
 ```
 
 Use ```send-to-cmdb --help``` to see the list of available options.
+
+**Test the generation of the output before importing the provider output to the CMDB!**
