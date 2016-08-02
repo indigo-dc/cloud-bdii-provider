@@ -1,74 +1,83 @@
-# Cloud BDII provider
+# Cloud Information provider
 
 [![BuildStatus](https://travis-ci.org/indigo-dc/cloud-info-provider.svg?branch=master)](https://travis-ci.org/indigo-dc/cloud-info-provider)
 
-The Cloud BDII provider generates a GlueSchema v2 representation of cloud
-resources for publihing it into a BDII
+The Cloud Information provider generates a representation of cloud resources,
+to be published inside INDIGO CMDB.
+
+The generated representation is described using a
+[Mako](http://www.makotemplates.org/) template having access to the cloud
+middleware information.
 
 ## Installation
 
 ### Dependencies
 
-The cloud-provider depends on PyYAML, which is already included as a dependency for 
-binary packages and when installing from source.
+The cloud-provider depends on PyYAML and Mako, which are already included as
+dependencies for binary packages and when installing from source.
 
-For running the cloud-provider in a production environment you will probably need:
- - bdii (available in Ubuntu/Debian repos, for RH based distros it is in EPEL, for
- Debian wheezy it is available in the backports repo).
- - if you are generating information for OpenStack, you will also need
- to install python-novaclient.
+For running the cloud-provider in a production environment, depending on your
+setup you will might need for OpenStack to install python-novaclient.
 
 ### Binary packages
 
-Packages are available at [EGI's AppDB](https://appdb.egi.eu/store/software/cloud.info.provider).
-Use the appropriate repos for your distribution and install using the usual tools.
+Packages are available at the [INDIGO repository](http://repo.indigo-datacloud.eu).
+Use the appropriate repository for your distribution and install using the usual tools.
 
 ### From source
 
-Get the source by cloning this repo and do a pip install:
+Get the source by cloning this repo and do a pip install.
 
+As pip will have to copy files to /etc/cloud-info-provider-indigo directory,
+the user should be able to write to it, so it is recommended to create it
+before using pip.
+
+``` sh
+sudo mkdir /etc/cloud-info-provider-indigo
+sudo chgrp you_user /etc/cloud-info-provider-indigo
+sudo chmod g+rwx /etc/cloud-info-provider-indigo
 ```
-git clone https://github.com/EGI-FCTF/BDIIscripts
-cd BDIIscripts 
+
+``` sh
+git clone https://github.com/indigo-dc/cloud-info-provider
+cd cloud-info-provider 
 pip install .
 ```
+## Configuring the output
 
-## Generation of the LDIF 
+Depending on the template used output can range from JSON to LDIF.
 
-The cloud-info-provider generates a LDIF according to the information in a
-yaml file describing the static information of the cloud resources.
-By default `/etc/cloud-info-provider/bdii.yaml` is used, but this path can be
-overriden with the `--yaml-file` option. A complete example with comments is
-available in the `sample.static.yaml` file.
+The ```--template-extension``` (default: indigo) allows to select different
+templates based on thier file extension.
+Templates should be available inside the directory ```--template-dir```
+(default: /etc/cloud-info-provider-indigo/templates)
+
+The ```--yaml-file``` (default /etc/cloud-info-provider/static.yaml``` allows
+to set some static values (see sample.static.yaml for a complete example with comments).
+
+Simple example of /etc/cloud-info-provider/static.yaml:
+
+``` yaml
+site:
+    name: TEST
+
+compute:
+    images:
+        defaults:
+            # Set to False or comment the line below if you want to show
+            # all the images installed in the site (also snapshots). Otherwise
+            # only images with a valid marketplace ID (set by the marketplace
+            # custom property) are shown
+            require_marketplace_id: false
+```
 
 Dynamic information can be further obtained with the middleware providers
-(OpenStack and OpenNebula via rOCCI supported currently). Use the
+(OpenStack and OpenNebula supported currently). Use the
 `--middleware` option for specifying the provider to use (see the command
 help for exact names). cloud-info-provider will fallback to static information
 defined in the yaml file if a dynamic provider is not able to return any
-information. See the `sample.openstack.yaml` and `sample.opennebularocci.yaml`
+information. See the `sample.openstack.yaml` and `sample.opennebula.yaml`
 for example configurations for each provider.
-
-There are three different maps in the yaml file considered by the provider:
-`site`, `compute`, and `storage`:
- * `site` contains basic information of the site. The only attribute to define
-    here is the `name` which must contain the site name as defined in GOCDB.
-    Alternatively, the site name can be fetched from
-    `/etc/glite-info-static/site/site.cfg` (or by the file set with the
-    `--glite-site-info-static` option).
-    Any other information is only relevant to generate a LDIF for a complete 
-    site-BDII (*this is not the recommended deployment mode*).
-   
- * `compute` should be present for those sites providing a IaaS computing
-    service. It describes the available resources, service endpoints,
-    the available VM images and the templates to run those images.
-    Dynamic providers will fetch most of the information in this section.
-    See the sample yaml files for details.
-
- * `storage` should be present for sites providing IaaS storage service.
-    Similarly to the `compute`, it contains a description of the resources
-    and enpoints providing the service. There are no dynamic providers for
-    `storage`at the moment.
 
 Each dynamic provider has its own commandline options for specifying how
 to connect to the underlying service. Use the `--help` option for a complete
@@ -76,85 +85,51 @@ listing of options.
 
 For example for OpenStack, use a command line similar to the following:
 ```
-cloud-info-provider-service --yaml-file /etc/cloud-info-provider/bdii.yaml \
-    --middleware OpenStack --os-username <username> --os-password <password> \
-    --os-tenant-name <tenant> --os-auth-url <auth-url>
+cloud-info-provider-indigo-service --middleware openstack \
+  --os-username <username> --os-password <password> \
+  --os-tenant-name <tenant> --os-auth-url <auth-url>
 ```
 
-**Test the generation of the LDIF before running the provider into your BDII!**
+For example for OpenNebula, use a command line similar to the following:
+```
+cloud-info-provider-indigo-service --middleware indigoon \
+  --on-auth <username>:<password> \
+  --on-rpcxml-endpoint <rpc-xml-endpoint>
+```
 
-## Running the provider in a resource-BDII
+Use ```cloud-info-provider-indigo-service --help``` to see the list of available options.
+
+**Test the generation of the output before importing the provider output to the CMDB!**
+
+## Running the provider in a cloud resource middleware
 
 This is the normal deployment mode for the cloud provider. It should be installed
 in a node with access to your cloud infrastructure: for OpenStack, access to
-nova service is needed; for OpenNebula-rOCCI provider, access to the files
-describing the rOCCI templates is needed (e.g. installing the provider in the same
-host as rOCCI-server).
+nova service is needed; for OpenNebula access to the XML endpoint is required.
 
-### Create the provider script
+## Importing cloud middleware information inside the CMDB.
 
-In `/var/lib/bdii/gip/provider/` create a `cloud-info-provider` file that 
-calls the provider with the correct options for your site:
+The provided ```send-to-cmdb``` python script allows to interact with the CMDB 
+It will expect JON from its standard input and use CMDB API to import/update
+information about images available in the cloud middleware.
 
-```
-#!/bin/sh
-
-cloud-info-provider-service --yaml /etc/cloud-info-provider/openstack.yaml \
-                            --middleware openstack \
-                            --os-username <username> --os-password <passwd> \
-                            --os-tenant-name <tenant> --os-auth-url <url>
-
+``` sh
+cloud-info-provider-indigo-service --middleware openstack \
+  --os-username <username> --os-password <password> \
+  --os-tenant-name <tenant> --os-auth-url <auth-url> 2> /dev/null \
+  | send-to-cmdb --cmdb-user <cmdb-user> \
+  --cmdb-password <cmdb-password> --sitename <sitename> -v
 ```
 
-Give execution permission:
-```
-chmod +x /var/lib/bdii/gip/provider/cloud-info-provider
-```
-and test it:
-```
-/var/lib/bdii/gip/provider/cloud-info-provider
-```
-It should output the full ldif describing your site.
+Real example
 
-### Start the bdii service
-
-Once the provider script is working, start the bdii service:
-```
-service bdii start
+``` sh
+cloud-info-provider-indigo-service --middleware openstack \
+  --os-username admin --os-tenant-name demo \
+  --os-password openstack \
+  --os-auth-url http://192.168.56.101:5000/v2.0 2> /dev/null \
+  | send-to-cmdb --cmdb-user cmdb_user --cmdb-password \
+  cmdb_password --sitename CYFRONET-CLOUD -v
 ```
 
-The ldap server should contain all your cloud resource information:
-```
-ldapsearch -x -h localhost -p 2170 -b o=glue
-```
-
-### Adding the resource provider to the site-BDII
-
-Sites should have a dedicated host for the site-BDII. Information on how to
-set up this machine is avaiable in the EGI.eu wiki at
-[How to publish site information](https://wiki.egi.eu/wiki/MAN01_How_to_publish_Site_Information). 
-
-Add your cloud-info-provider to your site-BDII by adding a new URL that looks like this:
-```
-ldap://<cloud-info-provier-hostname>:2170/GLUE2GroupID=cloud,o=glue
-```
-
-
-## Other deployment modes
-
-**These deployment modes cover special cases that should not be used in
-  production!**
-
-### Running the cloud-provider in a site-BDII
-
-If your site does not have a separated site-BDII and you want to use the cloud
-provider in the site-BDII host (NOTE: any problems in the cloud provider
-will affect your site-BDII!), you can add the `--site-in-suffix` to the provider
-in `/var/lib/bdii/gip/provider/cloud-info-provider`.
-
-### Generate complete BDII information
-
-**This does not generate GlueSchema 1.3 information and will fail SAM tests**
-
-The cloud provider can also generate the GlueSchema 2.0 info for a site by
-using the `--full-bdii-ldif` option.
+Use ```send-to-cmdb --help``` to see the list of available options.
