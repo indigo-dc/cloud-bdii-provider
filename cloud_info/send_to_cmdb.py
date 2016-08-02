@@ -125,6 +125,7 @@ class SendToCMDB(object):
         json_input = ''
         for line in sys.stdin.readlines():
             json_input += line.strip().rstrip('\n')
+        # XXX we should exit cleanly if unable to parse stdin as JSON
         self.local_images = json.loads(json_input)
         logging.info("Found %s local images" % len(self.local_images))
         logging.debug(json_input)

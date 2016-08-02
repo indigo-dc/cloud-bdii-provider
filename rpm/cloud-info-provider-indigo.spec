@@ -6,7 +6,7 @@
 
 Summary: Information provider for Cloud Compute and Cloud Storage services for INDIGO
 Name: cloud-info-provider-indigo
-Version: 0.8.1
+Version: 0.8.2
 Release: 1%{?dist}
 Group: Applications/Internet
 License: ASL 2.0
@@ -51,6 +51,8 @@ rm -rf $RPM_BUILD_ROOT
 %config /etc/cloud-info-provider-indigo/
 
 %changelog
+* Tue Aug 02 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.2-{%release}
+- Fix default value for --yaml-file parameter.
 * Fri Jul 29 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.1-{%release}
 - Add missing dependencies
 * Fri Jul 29 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.0-{%release}

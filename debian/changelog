@@ -1,3 +1,9 @@
+python-cloud-info-provider-indigo (0.8.2) trusty; urgency=medium
+
+  * Fix default value for --yaml-file parameter.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Tue, 02 Aug 2016 11:11:30 +0200
+
 python-cloud-info-provider-indigo (0.8.1) trusty; urgency=medium
 
   * Add missing dependencies.
