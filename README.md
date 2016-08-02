@@ -133,3 +133,6 @@ Use ```send-to-cmdb --help``` to see the list of available options
 CMDB endpoints).
 
 **Test the generation of the output before importing the provider output to the CMDB!**
+
+If needed it is possible to run the cloud information provider on a regular
+basis using a cron task.
