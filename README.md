@@ -103,7 +103,7 @@ This is the normal deployment mode for the cloud provider. It should be installe
 in a node with access to your cloud infrastructure: for OpenStack, access to
 nova service is needed; for OpenNebula access to the XML endpoint is required.
 
-## Importing cloud middleware information inside the CMDB.
+## Importing cloud middleware information inside an INDIGO CMDB.
 
 The provided ```send-to-cmdb``` python script allows to interact with the CMDB 
 It will expect JON from its standard input and use CMDB API to import/update
@@ -128,6 +128,8 @@ cloud-info-provider-indigo-service --middleware openstack \
   cmdb_password --sitename CYFRONET-CLOUD -v
 ```
 
-Use ```send-to-cmdb --help``` to see the list of available options.
+Use ```send-to-cmdb --help``` to see the list of available options
+(```--cmdb-read-endpoint``` and ```--cmdb-write-endpoint``` allowing to specify
+CMDB endpoints).
 
 **Test the generation of the output before importing the provider output to the CMDB!**
