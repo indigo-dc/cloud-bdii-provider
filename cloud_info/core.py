@@ -216,6 +216,21 @@ def parse_opts():
         help=('Extension to use for the templates'))
 
     parser.add_argument(
+        '--full-bdii-ldif',
+        action='store_true',
+        default=False,
+        help=('Whether to generate a LDIF containing all the '
+              'BDII information, or just this node\'s information\n'
+              'NOTE: it does not generate GlueSchema 1.3 information'))
+
+    parser.add_argument(
+        '--site-in-suffix',
+        action='store_true',
+        default=False,
+        help=('Whether to include the site name in the generated DN\'s'
+              'suffix (Use only for execution as a site-BDII provider)'))
+
+    parser.add_argument(
         '--middleware',
         metavar='MIDDLEWARE',
         choices=SUPPORTED_MIDDLEWARE,
