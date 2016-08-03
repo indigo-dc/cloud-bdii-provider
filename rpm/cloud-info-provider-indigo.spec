@@ -51,6 +51,8 @@ rm -rf $RPM_BUILD_ROOT
 %config /etc/cloud-info-provider-indigo/
 
 %changelog
+* Wed Aug 03 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.3-{%release}
+- Update documentation.
 * Tue Aug 02 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.2-{%release}
 - Fix default value for --yaml-file parameter.
 * Fri Jul 29 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.1-{%release}

@@ -1,3 +1,9 @@
+python-cloud-info-provider-indigo (0.8.3) trusty; urgency=medium
+
+  * Update documentation.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Wed, 03 Aug 2016 10:00:30 +0200
+
 python-cloud-info-provider-indigo (0.8.2) trusty; urgency=medium
 
   * Fix default value for --yaml-file parameter.
