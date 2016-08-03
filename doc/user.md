@@ -12,7 +12,10 @@ Templates should be available inside the directory ```--template-dir```
 The ```--yaml-file``` (default ```/etc/cloud-info-provider/static.yaml``` allows
 to set some static values (see sample.static.yaml for a complete example with comments).
 
-Simple example of ```/etc/cloud-info-provider/static.yaml```:
+Simple example of ```/etc/cloud-info-provider/static.yaml``` for an opennebula
+endpoint:
+
+For OpenNebula the endpoints section is required, but for OpenStack it can be omitted.
 
 ``` yaml
 site:
@@ -20,12 +23,6 @@ site:
 
 compute:
     endpoints:
-        defaults:
-            api_authn_method: User/Password
-            production_level: production
-            api_type: ON-XML-RPC
-            api_version: 2
-            api_endpoint_technology: REST
         https://localhost:2633/RPC2:
     images:
         defaults:
