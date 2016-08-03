@@ -1,3 +1,10 @@
+python-cloud-info-provider-indigo (0.8.4) trusty; urgency=medium
+
+  * Fix error due to removal of some parameters.
+  * Update documentation, including Ansible role.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Wed, 03 Aug 2016 19:15:30 +0200
+
 python-cloud-info-provider-indigo (0.8.3) trusty; urgency=medium
 
   * Update documentation.
