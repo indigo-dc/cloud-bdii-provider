@@ -1,3 +1,46 @@
+python-cloud-info-provider-indigo (0.8.3) trusty; urgency=medium
+
+  * Update documentation.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Wed, 03 Aug 2016 10:00:30 +0200
+
+python-cloud-info-provider-indigo (0.8.2) trusty; urgency=medium
+
+  * Fix default value for --yaml-file parameter.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Tue, 02 Aug 2016 11:11:30 +0200
+
+python-cloud-info-provider-indigo (0.8.1) trusty; urgency=medium
+
+  * Add missing dependencies.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Fri, 29 Jul 2016 16:57:30 +0200
+
+python-cloud-info-provider-indigo (0.8.0) trusty; urgency=medium
+
+  * Implement deletion of old images once a new one has been uploaded.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Fri, 29 Jul 2016 15:17:30 +0200
+
+python-cloud-info-provider-indigo (0.7.0) trusty; urgency=medium
+
+  * Update mako template
+  * Add a script for registering images to CMDB
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Tue, 28 Jul 2016 18:17:30 +0200
+
+python-cloud-info-provider-indigo (0.6.1) trusty; urgency=medium
+
+  * Update mako template to use fields added by java-syncrepo.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Wed, 27 Jul 2016 14:17:30 +0200
+
+python-cloud-info-provider-indigo (0.6) trusty; urgency=medium
+
+  * First release with support of JSON for INDIGO.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Tue, 26 Jul 2016 12:17:30 +0200
+
 python-cloud-info-provider (0.5-1) trusty; urgency=medium
 
   * Fixed issue when storage is not defined (#13).

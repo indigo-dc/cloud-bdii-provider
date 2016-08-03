@@ -5,10 +5,10 @@ import unittest
 
 import mock
 
-from cloud_bdii import exceptions
-from cloud_bdii.providers import openstack as os_provider
-from cloud_bdii.tests import data
-from cloud_bdii.tests import utils as test_utils
+from cloud_info import exceptions
+from cloud_info.providers import openstack as os_provider
+from cloud_info.tests import data
+from cloud_info.tests import utils as test_utils
 
 FAKES = data.OS_FAKES
 
@@ -142,6 +142,8 @@ class OpenStackProviderTest(unittest.TestCase):
                               ignored_fields=["compute_service_name"])
 
     def test_get_images(self):
+        # XXX move this to a custom class?
+        # XXX add docker information
         expected_images = {
             'bar id': {
                 'image_description': None,
@@ -164,6 +166,20 @@ class OpenStackProviderTest(unittest.TestCase):
                 'image_version': None,
                 'image_marketplace_id': 'http://example.org/',
                 'image_id': 'os_tpl#foo-id'
+            },
+            'baz id': {
+                'image_description': None,
+                'image_name': 'bazimage',
+                'image_os_family': None,
+                'image_os_name': None,
+                'image_os_version': None,
+                'image_platform': 'amd64',
+                'image_version': None,
+                'image_marketplace_id': None,
+                'image_id': 'os_tpl#baz_id',
+                'docker_id': 'sha1:xxxxxxxxxxxxxxxxxxxxxxxxxx',
+                'docker_tag': 'latest',
+                'docker_name': 'test/image'
             }
         }
 

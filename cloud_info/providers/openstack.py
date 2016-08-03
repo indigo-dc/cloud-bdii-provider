@@ -1,6 +1,6 @@
-from cloud_bdii import exceptions
-from cloud_bdii import providers
-from cloud_bdii import utils
+from cloud_info import exceptions
+from cloud_info import providers
+from cloud_info import utils
 
 
 class OpenStackProvider(providers.BaseProvider):
@@ -133,8 +133,8 @@ class OpenStackProvider(providers.BaseProvider):
         img_sch = defaults.get('image_schema', 'os_tpl')
 
         for image in self.api.images.list(detailed=True):
-            aux = template.copy()
-            aux.update(defaults)
+            aux_img = template.copy()
+            aux_img.update(defaults)
             link = None
             for link in image.links:
                 # TODO(aloga): Check if this is the needed parameter
@@ -144,12 +144,16 @@ class OpenStackProvider(providers.BaseProvider):
                     break
             # FIXME(aloga): we need to add the version, etc from
             # metadata
-            aux.update({
+            aux_img.update({
                 'image_name': image.name,
                 'image_id': '%s#%s' % (img_sch,
                                        OpenStackProvider.occify(image.id))
             })
 
+            for name, value in image.metadata.iteritems():
+                aux_img[name] = value
+
+            # XXX could probably be move to the mako template
             image_descr = None
             if image.metadata.get('vmcatcher_event_dc_description',
                                   None) is not None:
@@ -169,10 +173,10 @@ class OpenStackProvider(providers.BaseProvider):
                 continue
 
             if marketplace_id:
-                aux['image_marketplace_id'] = marketplace_id
+                aux_img['image_marketplace_id'] = marketplace_id
             if image_descr:
-                aux['image_description'] = image_descr
-            images[image.id] = aux
+                aux_img['image_description'] = image_descr
+            images[image.id] = aux_img
         return images
 
     @staticmethod
