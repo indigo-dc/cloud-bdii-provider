@@ -1,3 +1,9 @@
+python-cloud-info-provider-indigo (0.8.5) trusty; urgency=medium
+
+  * Remove BDII from recommended packages.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Thu, 04 Aug 2016 10:08:42 +0200
+
 python-cloud-info-provider-indigo (0.8.4) trusty; urgency=medium
 
   * Fix error due to removal of some parameters.
