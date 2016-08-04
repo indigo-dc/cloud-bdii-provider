@@ -6,7 +6,7 @@
 
 Summary: Information provider for Cloud Compute and Cloud Storage services for INDIGO
 Name: cloud-info-provider-indigo
-Version: 0.8.4
+Version: 0.8.5
 Release: 1%{?dist}
 Group: Applications/Internet
 License: ASL 2.0
@@ -51,6 +51,8 @@ rm -rf $RPM_BUILD_ROOT
 %config /etc/cloud-info-provider-indigo/
 
 %changelog
+* Tue Aug 04 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.5-{%release}
+- Remove BDII from recommended packages.
 * Wed Aug 03 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.4-{%release}
 - Fix error due to removal of some parameters.
 - Update documentation, including Ansible role.

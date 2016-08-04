@@ -18,7 +18,7 @@ Architecture: all
 Section: python
 Depends: ${python:Depends}, ${misc:Depends},
  python-yaml, python-requests, python-mako
-Recommends: bdii
+#Recommends: bdii
 Suggests: python-novaclient
 Provides: ${python:Provides}
 Description: Cloud information provider for INDIGO.
