@@ -96,14 +96,11 @@ class BaseBDIITest(BaseTest):
 
     def test_load_templates(self):
         self.opts.template_dir = 'foobar'
-        tpls = ['foo', 'bar']
-        tpl_contents = 'foo ${attributes["fobble"]}'
-        info = {'fobble': 'burble', 'brongle': 'farbla'}
+        tpls = ('foo', 'bar')
         expected_tpls = {
             'foo': 'foobar/foo.%s' % self.opts.template_extension,
             'bar': 'foobar/bar.%s' % self.opts.template_extension
         }
-        expected = 'foo burble'
 
         bdii = cloud_info.core.BaseBDII(self.opts)
         with utils.nested(
@@ -111,6 +108,23 @@ class BaseBDIITest(BaseTest):
             bdii.load_templates()
             templates_files = bdii.__dict__['templates_files']
             self.assertEqual(templates_files, expected_tpls)
+
+    def test_format_template(self):
+        self.opts.template_dir = 'foobar'
+        tpl_contents = 'foo ${attributes["fobble"]}'
+        tpl_files = {
+            'foo': 'foobar/foo.%s' % self.opts.template_extension,
+            'bar': 'foobar/bar.%s' % self.opts.template_extension
+        }
+        info = {'fobble': 'burble', 'brongle': 'farbla'}
+        expected = 'foo burble'
+
+        bdii = cloud_info.core.BaseBDII(self.opts)
+        with utils.nested(
+                mock.patch.object(bdii, 'templates_files', tpl_files),
+                mock.patch('mako.util.open',
+                           mock.mock_open(read_data=tpl_contents), create=True)
+        ):
             self.assertEqual(expected, bdii._format_template('foo', info))
 
 
