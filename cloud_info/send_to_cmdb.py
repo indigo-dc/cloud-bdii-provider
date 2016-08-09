@@ -6,6 +6,7 @@ import logging
 import sys
 
 import requests
+import six
 
 
 class SendToCMDB(object):
@@ -136,7 +137,7 @@ class SendToCMDB(object):
                     for key, value in input.iteritems()}
         elif isinstance(input, list):
             return [self._byteify(element) for element in input]
-        elif isinstance(input, unicode):
+        elif isinstance(input, six.text_type):
             return input.encode('utf-8')
         else:
             return input
