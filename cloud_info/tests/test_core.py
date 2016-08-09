@@ -92,8 +92,7 @@ class BaseBDIITest(BaseTest):
                 m_static.return_value = s
                 m_dynamic.return_value = d
 
-                self.assertEqual(e,
-                                 bdii._get_info_from_providers('foomethod'))
+                self.assertEqual(e, bdii._get_info_from_providers('foomethod'))
 
     def test_load_templates(self):
         self.opts.template_dir = 'foobar'
