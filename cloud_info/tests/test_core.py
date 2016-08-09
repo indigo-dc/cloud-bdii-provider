@@ -194,28 +194,31 @@ class BaseBDIITest(BaseTest):
 
 
 class IndigoComputeBDIITest(BaseTest):
+    @mock.patch.object(cloud_info.core.BaseBDII, '_format_template')
     @mock.patch.object(cloud_info.core.IndigoComputeBDII,
                        '_get_info_from_providers')
-    def test_render(self, m_get_info):
+    def test_render(self, m_get_info, m_format):
         m_get_info.side_effect = (
             DATA.compute_endpoints,
             DATA.site_info,
             DATA.compute_templates,
             DATA.compute_images,
         )
-        tpls = ['foo']
-        tpl_contents = 'foo ${attributes["fobble"]}'
-        info = {'fobble': 'burble', 'brongle': 'farbla'}
+        m_format.return_value = 'foo'
+        endpoints = DATA.compute_endpoints
+        static_compute_info = dict(endpoints, **DATA.site_info)
+        templates = DATA.compute_templates
+        images = DATA.compute_images
+
+        info = {}
+        info.update({'templates': templates})
+        info.update({'images': images})
+        info.update({'static_compute_info': static_compute_info})
+
         bdii = cloud_info.core.IndigoComputeBDII(self.opts)
-        with utils.nested(
-            mock.patch.object(bdii, 'templates', tpls),
-            mock.patch('mako.util.open',
-                       mock.mock_open(read_data=tpl_contents), create=True)
-        ):
-            bdii.load_templates()
-            # XXX here we should test bdii.redner()
-            # self.assertNotEqual('', bdii.render())
-            self.assertNotEqual('', bdii._format_template('foo', info))
+        self.assertIsNotNone(bdii.render())
+
+        m_format.assert_has_calls([mock.call("compute_bdii", info)])
 
     @mock.patch.object(cloud_info.core.IndigoComputeBDII,
                        '_get_info_from_providers')
