@@ -1,4 +1,3 @@
-import contextlib
 import os.path
 import unittest
 
@@ -6,13 +5,14 @@ import mock
 
 import cloud_info.core
 from cloud_info.tests import data
+from cloud_info.tests import utils
 
 DATA = data.DATA
 
 
 class ModuleTest(unittest.TestCase):
     def test_main(self):
-        with contextlib.nested(
+        with utils.nested(
             mock.patch.object(cloud_info.core, 'parse_opts'),
             mock.patch('cloud_info.core.CloudBDII'),
             mock.patch('cloud_info.core.IndigoComputeBDII'),
@@ -85,7 +85,7 @@ class BaseBDIITest(BaseTest):
         bdii = cloud_info.core.BaseBDII(self.opts)
 
         for s, d, e in cases:
-            with contextlib.nested(
+            with utils.nested(
                 mock.patch.object(bdii.static_provider, 'foomethod'),
                 mock.patch.object(bdii.dynamic_provider, 'foomethod')
             ) as (m_static, m_dynamic):
@@ -107,11 +107,8 @@ class BaseBDIITest(BaseTest):
         expected = 'foo burble'
 
         bdii = cloud_info.core.BaseBDII(self.opts)
-        with contextlib.nested(
-            mock.patch.object(bdii, 'templates', tpls),
-            mock.patch('mako.util.open',
-                       mock.mock_open(read_data=tpl_contents), create=True)
-        ):
+        with utils.nested(
+                mock.patch.object(bdii, 'templates', tpls)):
             bdii.load_templates()
             templates_files = bdii.__dict__['templates_files']
             self.assertEqual(templates_files, expected_tpls)
