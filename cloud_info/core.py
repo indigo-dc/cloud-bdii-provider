@@ -9,10 +9,9 @@ import mako.template
 
 SUPPORTED_MIDDLEWARE = {
     'openstack': cloud_info.providers.openstack.OpenStackProvider,
-    # 'opennebula': cloud_info.providers.opennebula.OpenNebulaProvider,
+    'opennebula': cloud_info.providers.opennebula.OpenNebulaProvider,
     'indigoon': cloud_info.providers.opennebula.IndigoONProvider,
-    # 'opennebularocci':
-    # cloud_info.providers.opennebula.OpenNebulaROCCIProvider,
+    'opennebularocci': cloud_info.providers.opennebula.OpenNebulaROCCIProvider,
     'static': cloud_info.providers.static.StaticProvider,
 }
 
