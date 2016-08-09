@@ -207,7 +207,7 @@ class IndigoComputeBDIITest(BaseTest):
         tpl_contents = 'foo ${attributes["fobble"]}'
         info = {'fobble': 'burble', 'brongle': 'farbla'}
         bdii = cloud_info.core.IndigoComputeBDII(self.opts)
-        with contextlib.nested(
+        with utils.nested(
             mock.patch.object(bdii, 'templates', tpls),
             mock.patch('mako.util.open',
                        mock.mock_open(read_data=tpl_contents), create=True)
