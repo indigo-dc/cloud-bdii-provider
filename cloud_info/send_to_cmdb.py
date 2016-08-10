@@ -56,7 +56,7 @@ class SendToCMDB(object):
     def retrieve_remote_service_images(self, image_id):
         service_images = []
         # Find all images having the same name
-        # TODO(Ask for a way to use : or to search using local image_id)
+        # TODO(gwarf) Ask for a way to use : or to search using local image_id
         # XXX filters/image_name does not allow to use name containing :
         # img_name = urllib.quote(image_name)
         # url = "%s/image/filters/image_name/%s" % (self.cmdb_read_url_base,
@@ -201,11 +201,12 @@ class SendToCMDB(object):
             logging.error("Response %s" % r.text)
 
     def update_remote_images(self):
+        # TODO(gwarf) store both kind of images using a common type
         self.retrieve_local_images()
         self.retrieve_remote_images()
 
-        # TODO(compute list of images)
         images_to_delete = self.remote_images
+        # TODO(gwarf) compute list of images
         images_to_update = []
         images_to_add = self.local_images
 
