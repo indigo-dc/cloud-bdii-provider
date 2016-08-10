@@ -205,10 +205,16 @@ class SendToCMDB(object):
         self.retrieve_local_images()
         self.retrieve_remote_images()
 
-        images_to_delete = self.remote_images
         # TODO(gwarf) compute list of images
+        images_to_delete = []
         images_to_update = []
         images_to_add = self.local_images
+
+        for image in self.remote_images:
+            if image['image_id'] not in self.local_images:
+                images_to_delete.append(image)
+            else:
+                images_to_update.append(image)
 
         for image in images_to_add:
             self.submit_image(image)
