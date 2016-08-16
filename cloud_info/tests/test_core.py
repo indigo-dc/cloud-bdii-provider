@@ -1,4 +1,3 @@
-import contextlib
 import os.path
 import unittest
 
@@ -6,13 +5,14 @@ import mock
 
 import cloud_info.core
 from cloud_info.tests import data
+from cloud_info.tests import utils
 
 DATA = data.DATA
 
 
 class ModuleTest(unittest.TestCase):
     def test_main(self):
-        with contextlib.nested(
+        with utils.nested(
             mock.patch.object(cloud_info.core, 'parse_opts'),
             mock.patch('cloud_info.core.CloudBDII'),
             mock.patch('cloud_info.core.IndigoComputeBDII'),
@@ -85,127 +85,198 @@ class BaseBDIITest(BaseTest):
         bdii = cloud_info.core.BaseBDII(self.opts)
 
         for s, d, e in cases:
-            with contextlib.nested(
+            with utils.nested(
                 mock.patch.object(bdii.static_provider, 'foomethod'),
                 mock.patch.object(bdii.dynamic_provider, 'foomethod')
             ) as (m_static, m_dynamic):
                 m_static.return_value = s
                 m_dynamic.return_value = d
 
-                self.assertEqual(e,
-                                 bdii._get_info_from_providers('foomethod'))
+                self.assertEqual(e, bdii._get_info_from_providers('foomethod'))
 
     def test_load_templates(self):
         self.opts.template_dir = 'foobar'
-        tpls = ['foo', 'bar']
-        tpl_contents = 'foo ${attributes["fobble"]}'
-        info = {'fobble': 'burble', 'brongle': 'farbla'}
+        tpls = ('foo', 'bar')
         expected_tpls = {
             'foo': 'foobar/foo.%s' % self.opts.template_extension,
             'bar': 'foobar/bar.%s' % self.opts.template_extension
         }
-        expected = 'foo burble'
 
         bdii = cloud_info.core.BaseBDII(self.opts)
-        with contextlib.nested(
-            mock.patch.object(bdii, 'templates', tpls),
-            mock.patch('mako.util.open',
-                       mock.mock_open(read_data=tpl_contents), create=True)
-        ):
+        with utils.nested(
+                mock.patch.object(bdii, 'templates', tpls)):
             bdii.load_templates()
             templates_files = bdii.__dict__['templates_files']
             self.assertEqual(templates_files, expected_tpls)
+
+    def test_format_template(self):
+        self.opts.template_dir = 'foobar'
+        tpl_contents = 'foo ${attributes["fobble"]}'
+        tpl_files = {
+            'foo': 'foobar/foo.%s' % self.opts.template_extension,
+            'bar': 'foobar/bar.%s' % self.opts.template_extension
+        }
+        info = {'fobble': 'burble', 'brongle': 'farbla'}
+        expected = 'foo burble'
+
+        bdii = cloud_info.core.BaseBDII(self.opts)
+        with utils.nested(
+                mock.patch.object(bdii, 'templates_files', tpl_files),
+                mock.patch('mako.util.open',
+                           mock.mock_open(read_data=tpl_contents), create=True)
+        ):
             self.assertEqual(expected, bdii._format_template('foo', info))
 
 
-# XXX disabled while fixing mako template stuff
-# XXX not needed for Indigo yet
-# class CloudBDIITest(BaseTest):
-#     @mock.patch.object(cloud_info.core.CloudBDII, '_get_info_from_providers')
-#     def test_render(self, m_get_info):
-#         m_get_info.return_value = DATA.site_info
-#         bdii = cloud_info.core.CloudBDII(self.opts)
-#         self.assertIsNotNone(bdii.render())
-#
-#     @mock.patch.object(cloud_info.core.CloudBDII, '_get_info_from_providers')
-#     def test_render_full(self, m_get_info):
-#         self.opts.full_bdii_ldif = True
-#         m_get_info.return_value = DATA.site_info_full
-#         bdii = cloud_info.core.CloudBDII(self.opts)
-#         self.assertNotEqual('', bdii.render())
-#
-#
-# class StorageBDIITEst(BaseTest):
-#     @mock.patch.object(cloud_info.core.StorageBDII,
-#                        '_get_info_from_providers')
-#     def test_render(self, m_get_info):
-#         m_get_info.side_effect = (
-#             DATA.storage_endpoints,
-#             DATA.site_info
-#         )
-#         bdii = cloud_info.core.StorageBDII(self.opts)
-#         self.assertNotEqual('', bdii.render())
-#
-#     @mock.patch.object(cloud_info.core.StorageBDII,
-#                        '_get_info_from_providers')
-#     def test_render_empty(self, m_get_info):
-#         m_get_info.side_effect = (
-#             {},
-#             DATA.site_info
-#         )
-#         bdii = cloud_info.core.StorageBDII(self.opts)
-#         self.assertEqual('', bdii.render())
-#
-#
-# class ComputeBDIITest(BaseTest):
-#     @mock.patch.object(cloud_info.core.ComputeBDII,
-#                        '_get_info_from_providers')
-#     def test_render(self, m_get_info):
-#         m_get_info.side_effect = (
-#             DATA.compute_endpoints,
-#             DATA.site_info,
-#             DATA.compute_templates,
-#             DATA.compute_images,
-#         )
-#         bdii = cloud_info.core.ComputeBDII(self.opts)
-#         self.assertNotEqual('', bdii.render())
-#
-#     @mock.patch.object(cloud_info.core.ComputeBDII,
-#                        '_get_info_from_providers')
-#     def test_render_empty(self, m_get_info):
-#         m_get_info.side_effect = (
-#             {},
-#             DATA.site_info,
-#             DATA.compute_templates,
-#             DATA.compute_images,
-#         )
-#         bdii = cloud_info.core.ComputeBDII(self.opts)
-#         self.assertEqual('', bdii.render())
+class CloudBDIITest(BaseTest):
+    @mock.patch.object(cloud_info.core.BaseBDII, '_format_template')
+    @mock.patch.object(cloud_info.core.CloudBDII, '_get_info_from_providers')
+    def test_render(self, m_get_info, m_format):
+        m_get_info.return_value = DATA.site_info
+        m_format.return_value = 'foo'
+        bdii = cloud_info.core.CloudBDII(self.opts)
+        self.assertIsNotNone(bdii.render())
+        m_format.assert_has_calls([mock.call("headers",
+                                  DATA.site_info),
+                                  mock.call("clouddomain", DATA.site_info)])
+
+    @mock.patch.object(cloud_info.core.BaseBDII, '_format_template')
+    @mock.patch.object(cloud_info.core.CloudBDII, '_get_info_from_providers')
+    def test_render_full(self, m_get_info, m_format):
+        self.opts.full_bdii_ldif = True
+        m_get_info.return_value = DATA.site_info_full
+        m_format.return_value = 'foo'
+        bdii = cloud_info.core.CloudBDII(self.opts)
+        self.assertIsNotNone(bdii.render())
+        m_format.assert_has_calls([mock.call("headers", DATA.site_info_full),
+                                  mock.call("domain", DATA.site_info_full),
+                                  mock.call("bdii", DATA.site_info_full),
+                                  mock.call("clouddomain",
+                                            DATA.site_info_full)])
 
 
-class IndigoComputeBDIITest(BaseTest):
-    @mock.patch.object(cloud_info.core.IndigoComputeBDII,
-                       '_get_info_from_providers')
-    def test_render(self, m_get_info):
+class StorageBDIITEst(BaseTest):
+    @mock.patch.object(cloud_info.core.BaseBDII, '_format_template')
+    @mock.patch.object(cloud_info.core.StorageBDII, '_get_info_from_providers')
+    def test_render(self, m_get_info, m_format):
+        m_get_info.side_effect = (
+            DATA.storage_endpoints,
+            DATA.site_info
+        )
+        m_format.return_value = 'foo'
+        endpoints = DATA.storage_endpoints
+        static_storage_info = dict(endpoints, **DATA.site_info)
+        static_storage_info.pop('endpoints')
+
+        bdii = cloud_info.core.StorageBDII(self.opts)
+        self.assertIsNotNone(bdii.render())
+
+        m_format_calls = [mock.call("storage_service", static_storage_info)]
+
+        for url, endpoint in endpoints['endpoints'].items():
+            endpoint.setdefault('endpoint_url', url)
+            m_format_calls.append(mock.call('storage_endpoint',
+                                  endpoint, extra=static_storage_info))
+
+        m_format_calls.append(mock.call('storage_capacity',
+                              static_storage_info))
+
+        m_format.assert_has_calls(m_format_calls)
+
+    @mock.patch.object(cloud_info.core.StorageBDII, '_get_info_from_providers')
+    def test_render_empty(self, m_get_info):
+        m_get_info.side_effect = (
+            {},
+            DATA.site_info
+        )
+        bdii = cloud_info.core.StorageBDII(self.opts)
+        self.assertEqual('', bdii.render())
+
+
+class ComputeBDIITest(BaseTest):
+    @mock.patch.object(cloud_info.core.BaseBDII, '_format_template')
+    @mock.patch.object(cloud_info.core.ComputeBDII, '_get_info_from_providers')
+    def test_render(self, m_get_info, m_format):
         m_get_info.side_effect = (
             DATA.compute_endpoints,
             DATA.site_info,
             DATA.compute_templates,
             DATA.compute_images,
         )
-        tpls = ['foo']
-        tpl_contents = 'foo ${attributes["fobble"]}'
-        info = {'fobble': 'burble', 'brongle': 'farbla'}
+        m_format.return_value = 'foo'
+        endpoints = DATA.compute_endpoints
+        static_compute_info = dict(endpoints, **DATA.site_info)
+        static_compute_info.pop('endpoints')
+
+        bdii = cloud_info.core.ComputeBDII(self.opts)
+        self.assertIsNotNone(bdii.render())
+
+        m_format_calls = [mock.call("compute_service", static_compute_info)]
+
+        for url, endpoint in endpoints['endpoints'].items():
+            endpoint.setdefault('endpoint_url', url)
+            m_format_calls.append(mock.call('compute_endpoint',
+                                  endpoint, extra=static_compute_info))
+
+        templates = DATA.compute_templates
+        for tid, ex_env in templates.items():
+            ex_env.setdefault('template_id', tid)
+            m_format_calls.append(mock.call('execution_environment',
+                                            ex_env,
+                                            extra=static_compute_info))
+        images = DATA.compute_images
+        for iid, app_env in images.items():
+            app_env.setdefault('image_id', iid)
+            app_env.setdefault('image_description',
+                               ('%(image_name)s version '
+                                '%(image_version)s on '
+                                '%(image_os_family)s %(image_os_name)s '
+                                '%(image_os_version)s '
+                                '%(image_platform)s' % app_env))
+            m_format_calls.append(mock.call('application_environment',
+                                            app_env,
+                                            extra=static_compute_info))
+
+        m_format.assert_has_calls(m_format_calls)
+
+    @mock.patch.object(cloud_info.core.ComputeBDII, '_get_info_from_providers')
+    def test_render_empty(self, m_get_info):
+        m_get_info.side_effect = (
+            {},
+            DATA.site_info,
+            DATA.compute_templates,
+            DATA.compute_images,
+        )
+        bdii = cloud_info.core.ComputeBDII(self.opts)
+        self.assertEqual('', bdii.render())
+
+
+class IndigoComputeBDIITest(BaseTest):
+    @mock.patch.object(cloud_info.core.BaseBDII, '_format_template')
+    @mock.patch.object(cloud_info.core.IndigoComputeBDII,
+                       '_get_info_from_providers')
+    def test_render(self, m_get_info, m_format):
+        m_get_info.side_effect = (
+            DATA.compute_endpoints,
+            DATA.site_info,
+            DATA.compute_templates,
+            DATA.compute_images,
+        )
+        m_format.return_value = 'foo'
+        endpoints = DATA.compute_endpoints
+        static_compute_info = dict(endpoints, **DATA.site_info)
+        templates = DATA.compute_templates
+        images = DATA.compute_images
+
+        info = {}
+        info.update({'templates': templates})
+        info.update({'images': images})
+        info.update({'static_compute_info': static_compute_info})
+
         bdii = cloud_info.core.IndigoComputeBDII(self.opts)
-        with contextlib.nested(
-            mock.patch.object(bdii, 'templates', tpls),
-            mock.patch('mako.util.open',
-                       mock.mock_open(read_data=tpl_contents), create=True)
-        ):
-            bdii.load_templates()
-            # XXX here we should test bdii.redner()
-            # self.assertNotEqual('', bdii.render())
-            self.assertNotEqual('', bdii._format_template('foo', info))
+        self.assertIsNotNone(bdii.render())
+
+        m_format.assert_has_calls([mock.call("compute_bdii", info)])
 
     @mock.patch.object(cloud_info.core.IndigoComputeBDII,
                        '_get_info_from_providers')

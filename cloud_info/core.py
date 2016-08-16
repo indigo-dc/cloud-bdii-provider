@@ -9,10 +9,9 @@ import mako.template
 
 SUPPORTED_MIDDLEWARE = {
     'openstack': cloud_info.providers.openstack.OpenStackProvider,
-    # 'opennebula': cloud_info.providers.opennebula.OpenNebulaProvider,
+    'opennebula': cloud_info.providers.opennebula.OpenNebulaProvider,
     'indigoon': cloud_info.providers.opennebula.IndigoONProvider,
-    # 'opennebularocci':
-    # cloud_info.providers.opennebula.OpenNebulaROCCIProvider,
+    'opennebularocci': cloud_info.providers.opennebula.OpenNebulaROCCIProvider,
     'static': cloud_info.providers.static.StaticProvider,
 }
 
@@ -33,6 +32,7 @@ class BaseBDII(object):
         self.static_provider = SUPPORTED_MIDDLEWARE['static'](opts)
 
     def load_templates(self):
+        self.templates_files = {}
         for tpl in self.templates:
             template_extension = self.opts.template_extension
             template_file = os.path.join(self.opts.template_dir,
@@ -79,7 +79,7 @@ class StorageBDII(BaseBDII):
         output.append(self._format_template('storage_service',
                                             static_storage_info))
 
-        for url, endpoint in endpoints['endpoints'].iteritems():
+        for url, endpoint in endpoints['endpoints'].items():
             endpoint.setdefault('endpoint_url', url)
             output.append(self._format_template('storage_endpoint',
                                                 endpoint,
@@ -114,21 +114,21 @@ class ComputeBDII(BaseBDII):
         output.append(self._format_template('compute_service',
                                             static_compute_info))
 
-        for url, endpoint in endpoints['endpoints'].iteritems():
+        for url, endpoint in endpoints['endpoints'].items():
             endpoint.setdefault('endpoint_url', url)
             output.append(self._format_template('compute_endpoint',
                                                 endpoint,
                                                 extra=static_compute_info))
 
         templates = self._get_info_from_providers('get_templates')
-        for tid, ex_env in templates.iteritems():
+        for tid, ex_env in templates.items():
             ex_env.setdefault('template_id', tid)
             output.append(self._format_template('execution_environment',
                                                 ex_env,
                                                 extra=static_compute_info))
 
         images = self._get_info_from_providers('get_images')
-        for iid, app_env in images.iteritems():
+        for iid, app_env in images.items():
             app_env.setdefault('image_id', iid)
             app_env.setdefault('image_description',
                                ('%(image_name)s version '
@@ -174,7 +174,7 @@ class CloudBDII(BaseBDII):
         super(CloudBDII, self).__init__(opts)
 
         if not self.opts.full_bdii_ldif:
-            self.templates = ('headers', 'clouddomain', )
+            self.templates = ('headers', 'clouddomain')
         else:
             self.templates = ('headers', 'domain', 'bdii', 'clouddomain')
 

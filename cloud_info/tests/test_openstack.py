@@ -1,5 +1,4 @@
 import argparse
-import contextlib
 import sys
 import unittest
 
@@ -8,7 +7,7 @@ import mock
 from cloud_info import exceptions
 from cloud_info.providers import openstack as os_provider
 from cloud_info.tests import data
-from cloud_info.tests import utils as test_utils
+from cloud_info.tests import utils as utils
 
 FAKES = data.OS_FAKES
 
@@ -24,7 +23,9 @@ class OpenStackProviderOptionsTest(unittest.TestCase):
                                   '--os-tenant-name', 'bazonk',
                                   '--os-auth-url', 'http://example.org:5000',
                                   '--os-cacert', 'foobar',
-                                  '--insecure'])
+                                  '--insecure',
+                                  '--legacy-occi-os',
+                                  '--os-api-version', '2.1'])
 
         self.assertEqual(opts.os_username, 'foo')
         self.assertEqual(opts.os_password, 'bar')
@@ -32,13 +33,17 @@ class OpenStackProviderOptionsTest(unittest.TestCase):
         self.assertEqual(opts.os_auth_url, 'http://example.org:5000')
         self.assertEqual(opts.os_cacert, 'foobar')
         self.assertEqual(opts.insecure, True)
+        self.assertEqual(opts.legacy_occi_os, True)
+        self.assertEqual(opts.os_api_version, '2.1')
 
     def test_options(self):
         class Opts(object):
             os_username = os_password = os_tenant_name = os_tenant_id = 'foo'
             os_auth_url = 'http://foo.example.org'
+            os_api_version = '2.1'
             os_cacert = None
             insecure = False
+            legacy_occi_os = False
 
         sys.modules['novaclient'] = mock.Mock()
         sys.modules['novaclient.client'] = mock.Mock()
@@ -65,23 +70,33 @@ class OpenStackProviderTest(unittest.TestCase):
             def __init__(self, opts):
                 self.api = mock.Mock()
                 self.api.client.auth_url = 'http://foo.example.org:1234/v2'
+                self.ks_api = mock.Mock()
+                self.ks_api.services.list.return_value = {}
+                self.ks_api.endpoints.list.return_value = {}
                 self.static = mock.Mock()
+                self.legacy_occi_os = False
+                self.opts = opts
 
-        self.provider = FakeProvider(None)
+        class Opts(object):
+            os_auth_url = 'http://foo.example.org:1234/v2'
+            os_api_version = '2.1'
+
+        self.provider = FakeProvider(Opts())
+        self.maxDiff = None
 
     def assert_resources(self, expected, observed, template=None,
                          ignored_fields=[]):
         if template:
-            fields = test_utils.get_variables_from_template(template,
-                                                            ignored_fields)
+            fields = utils.get_variables_from_template(template,
+                                                       ignored_fields)
         else:
             fields = []
-        for k, v in observed.iteritems():
+        for k, v in observed.items():
             self.assertDictEqual(expected[k], v)
             for f in fields:
                 self.assertIn(f, v)
 
-    def test_get_templates_with_defaults(self):
+    def test_get_legacy_templates_with_defaults(self):
         expected_templates = {}
         for f in FAKES.flavors:
             if not f.is_public:
@@ -96,7 +111,68 @@ class OpenStackProviderTest(unittest.TestCase):
                 'template_network': 'private'
             }
 
-        with contextlib.nested(
+        self.provider.legacy_occi_os = True
+        with utils.nested(
+            mock.patch.object(self.provider.static, 'get_template_defaults'),
+            mock.patch.object(self.provider.api.flavors, 'list'),
+        ) as (m_get_template_defaults, m_flavors_list):
+            m_get_template_defaults.return_value = {}
+            m_flavors_list.return_value = FAKES.flavors
+            templates = self.provider.get_templates()
+            assert m_get_template_defaults.called
+
+        self.assert_resources(expected_templates,
+                              templates,
+                              template="execution_environment.ldif",
+                              ignored_fields=["compute_service_name"])
+
+    def test_get_legacy_templates_with_defaults_from_static(self):
+        expected_templates = {}
+        for f in FAKES.flavors:
+            if not f.is_public:
+                continue
+
+            name = f.name.strip().replace(' ', '_').replace('.', '-').lower()
+            expected_templates[f.id] = {
+                'template_memory': f.ram,
+                'template_cpu': f.vcpus,
+                'template_id': 'resource_tpl#%s' % name,
+                'template_platform': 'i686',
+                'template_network': 'private'
+            }
+
+        self.provider.legacy_occi_os = True
+        with utils.nested(
+            mock.patch.object(self.provider.static, 'get_template_defaults'),
+            mock.patch.object(self.provider.api.flavors, 'list'),
+        ) as (m_get_template_defaults, m_flavors_list):
+            m_get_template_defaults.return_value = {
+                'template_platform': 'i686'
+            }
+            m_flavors_list.return_value = FAKES.flavors
+            templates = self.provider.get_templates()
+            assert m_get_template_defaults.called
+
+        self.assert_resources(expected_templates,
+                              templates,
+                              template="execution_environment.ldif",
+                              ignored_fields=["compute_service_name"])
+
+    def test_get_templates_with_defaults(self):
+        expected_templates = {}
+        for f in FAKES.flavors:
+            if not f.is_public:
+                continue
+
+            expected_templates[f.id] = {
+                'template_memory': f.ram,
+                'template_cpu': f.vcpus,
+                'template_id': 'resource_tpl#%s' % f.id,
+                'template_platform': 'amd64',
+                'template_network': 'private'
+            }
+
+        with utils.nested(
             mock.patch.object(self.provider.static, 'get_template_defaults'),
             mock.patch.object(self.provider.api.flavors, 'list'),
         ) as (m_get_template_defaults, m_flavors_list):
@@ -116,16 +192,15 @@ class OpenStackProviderTest(unittest.TestCase):
             if not f.is_public:
                 continue
 
-            name = f.name.strip().replace(' ', '_').replace('.', '-').lower()
             expected_templates[f.id] = {
                 'template_memory': f.ram,
                 'template_cpu': f.vcpus,
-                'template_id': 'resource_tpl#%s' % name,
+                'template_id': 'resource_tpl#%s' % f.id,
                 'template_platform': 'i686',
                 'template_network': 'private'
             }
 
-        with contextlib.nested(
+        with utils.nested(
             mock.patch.object(self.provider.static, 'get_template_defaults'),
             mock.patch.object(self.provider.api.flavors, 'list'),
         ) as (m_get_template_defaults, m_flavors_list):
@@ -183,7 +258,7 @@ class OpenStackProviderTest(unittest.TestCase):
             }
         }
 
-        with contextlib.nested(
+        with utils.nested(
             mock.patch.object(self.provider.static, 'get_image_defaults'),
             mock.patch.object(self.provider.api.images, 'list'),
         ) as (m_get_image_defaults, m_images_list):
@@ -222,11 +297,12 @@ class OpenStackProviderTest(unittest.TestCase):
                 'endpoint_occi_api_version': '11.11',
                 'endpoint_openstack_api_version': '99.99',
             }
-            self.provider.api.client.service_catalog.catalog = FAKES.catalog
+            self.provider.ks_api.services.list.return_value = FAKES.catalog
+            self.provider.ks_api.endpoints.list.return_value = FAKES.endpoints
             endpoints = self.provider.get_compute_endpoints()
             assert m_get_endpoint_defaults.called
 
-        for k, v in expected_endpoints['endpoints'].iteritems():
+        for k, v in expected_endpoints['endpoints'].items():
             self.assertDictContainsSubset(v, endpoints['endpoints'].get(k, {}))
 
     def test_get_endpoints_with_defaults(self):
@@ -238,7 +314,7 @@ class OpenStackProviderTest(unittest.TestCase):
                     'endpoint_url': 'https://cloud.example.org:8787/'},
                 '1b7f14c87d8c42ad962f4d3a5fd13a77': {
                     'compute_api_type': 'OpenStack',
-                    'compute_api_version': '2',
+                    'compute_api_version': '2.1',
                     'endpoint_url': 'https://cloud.example.org:8774/v1.1/ce2d'}
             },
             'compute_middleware_developer': 'OpenStack',
@@ -250,7 +326,8 @@ class OpenStackProviderTest(unittest.TestCase):
             self.provider.static, 'get_compute_endpoint_defaults'
         ) as m_get_endpoint_defaults:
             m_get_endpoint_defaults.return_value = {}
-            self.provider.api.client.service_catalog.catalog = FAKES.catalog
+            self.provider.ks_api.services.list.return_value = FAKES.catalog
+            self.provider.ks_api.endpoints.list.return_value = FAKES.endpoints
             endpoints = self.provider.get_compute_endpoints()
             assert m_get_endpoint_defaults.called
 

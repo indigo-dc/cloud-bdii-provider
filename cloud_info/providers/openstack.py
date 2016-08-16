@@ -1,3 +1,5 @@
+import logging
+
 from cloud_info import exceptions
 from cloud_info import providers
 from cloud_info import utils
@@ -13,13 +15,36 @@ class OpenStackProvider(providers.BaseProvider):
             msg = 'Cannot import novaclient module.'
             raise exceptions.OpenStackProviderException(msg)
 
-        (os_username, os_password, os_tenant_name,
-            os_auth_url, cacert, insecure) = (opts.os_username,
-                                              opts.os_password,
-                                              opts.os_tenant_name,
-                                              opts.os_auth_url,
-                                              opts.os_cacert,
-                                              opts.insecure)
+        try:
+            import keystoneclient.v3.client as ksclient
+            # TODO(gwarf) implement if we need to keep supporting V2.0
+            # import keystoneclient.v2_0.client as ksclient
+        except ImportError:
+            msg = 'Cannot import keystoneclient.'
+            raise exceptions.OpenStackProviderException(msg)
+
+        try:
+            from keystoneauth1 import identity
+            from keystoneauth1 import session
+        except ImportError:
+            msg = 'Cannot import keystoneauth1.'
+            raise exceptions.OpenStackProviderException(msg)
+
+        # Remove info log messages from output
+        logging.getLogger('requests').setLevel(logging.WARNING)
+        logging.getLogger('keystoneauth').setLevel(logging.WARNING)
+        logging.getLogger('novaclient').setLevel(logging.WARNING)
+
+        (os_username, os_password, os_tenant_name, os_auth_url,
+            os_api_version, cacert, insecure,
+            legacy_occi_os) = (opts.os_username,
+                               opts.os_password,
+                               opts.os_tenant_name,
+                               opts.os_auth_url,
+                               opts.os_api_version,
+                               opts.os_cacert,
+                               opts.insecure,
+                               opts.legacy_occi_os)
 
         if not os_username:
             msg = ('ERROR, You must provide a username '
@@ -41,56 +66,67 @@ class OpenStackProvider(providers.BaseProvider):
                    'via either --os-auth-url or env[OS_AUTH_URL] ')
             raise exceptions.OpenStackProviderException(msg)
 
-        client_cls = novaclient.client.get_client_class('2')
-        if insecure:
-            self.api = client_cls(os_username,
-                                  os_password,
-                                  os_tenant_name,
-                                  auth_url=os_auth_url,
-                                  insecure=insecure)
+        if os_auth_url.find('v2.0') > -1:
+            auth = identity.Password(auth_url=os_auth_url,
+                                     username=os_username,
+                                     password=os_password,
+                                     project_name=os_tenant_name)
         else:
-            self.api = client_cls(os_username,
-                                  os_password,
-                                  os_tenant_name,
-                                  auth_url=os_auth_url,
-                                  insecure=insecure,
-                                  cacert=cacert)
+            auth = identity.Password(auth_url=os_auth_url,
+                                     username=os_username,
+                                     password=os_password,
+                                     project_name=os_tenant_name,
+                                     user_domain_id='default',
+                                     project_domain_id='default')
 
-        self.api.authenticate()
+        if insecure:
+            verify = False
+        else:
+            verify = cacert
+
+        sess = session.Session(auth=auth, verify=verify)
+        self.api = novaclient.client.Client(os_api_version, session=sess)
+        self.ks_api = ksclient.Client(session=sess)
+
         self.static = providers.static.StaticProvider(opts)
+        self.legacy_occi_os = legacy_occi_os
 
     def get_compute_endpoints(self):
         ret = {
             'endpoints': {},
             'compute_middleware_developer': 'OpenStack',
             'compute_middleware': 'OpenStack Nova',
-            'compute_service_name': self.api.client.auth_url,
+            'compute_service_name': self.opts.os_auth_url,
         }
 
         defaults = self.static.get_compute_endpoint_defaults(prefix=True)
-        catalog = self.api.client.service_catalog.catalog
 
-        endpoints = catalog['access']['serviceCatalog']
-        for endpoint in endpoints:
-            if endpoint['type'] == 'occi':
+        catalog = self.ks_api.services.list(enabled=True)
+
+        endpoints = self.ks_api.endpoints.list(enabled=True,
+                                               interface='public')
+        for service in catalog:
+            if service.type == 'occi':
                 e_type = 'OCCI'
                 e_version = defaults.get('endpoint_occi_api_version', '1.1')
-            elif endpoint['type'] == 'compute':
+            elif service.type == 'compute':
                 e_type = 'OpenStack'
-                e_version = defaults.get('endpoint_openstack_api_version', '2')
+                e_version = defaults.get('endpoint_openstack_api_version',
+                                         self.opts.os_api_version)
             else:
                 continue
 
-            for ept in endpoint['endpoints']:
-                e_id = ept['id']
-                e_url = ept['publicURL']
+            for endpoint in endpoints:
+                if endpoint.service_id == service.id:
+                    e_id = endpoint.service_id
+                    e_url = endpoint.url
 
-                e = defaults.copy()
-                e.update({'endpoint_url': e_url,
-                          'compute_api_type': e_type,
-                          'compute_api_version': e_version})
+                    e = defaults.copy()
+                    e.update({'endpoint_url': e_url,
+                              'compute_api_type': e_type,
+                              'compute_api_version': e_version})
 
-                ret['endpoints'][e_id] = e
+                    ret['endpoints'][e_id] = e
 
         return ret
 
@@ -101,14 +137,16 @@ class OpenStackProvider(providers.BaseProvider):
                     'template_network': 'private'}
         defaults.update(self.static.get_template_defaults(prefix=True))
         tpl_sch = defaults.get('template_schema', 'resource_tpl')
+        flavor_id_attr = 'name' if self.legacy_occi_os else 'id'
 
         for flavor in self.api.flavors.list(detailed=True):
             if not flavor.is_public:
                 continue
 
             aux = defaults.copy()
+            flavor_id = str(getattr(flavor, flavor_id_attr))
             template_id = '%s#%s' % (tpl_sch,
-                                     OpenStackProvider.occify(flavor.name))
+                                     OpenStackProvider.occify(flavor_id))
             aux.update({'template_id': template_id,
                         'template_memory': flavor.ram,
                         'template_cpu': flavor.vcpus})
@@ -150,7 +188,7 @@ class OpenStackProvider(providers.BaseProvider):
                                        OpenStackProvider.occify(image.id))
             })
 
-            for name, value in image.metadata.iteritems():
+            for name, value in image.metadata.items():
                 aux_img[name] = value
 
             # XXX could probably be move to the mako template
@@ -213,6 +251,12 @@ class OpenStackProvider(providers.BaseProvider):
             help='Defaults to env[OS_AUTH_URL].')
 
         parser.add_argument(
+            '--os-api-version',
+            metavar='<api-version>',
+            default=utils.env('OS_COMPUTE_API_VERSION', default='2'),
+            help='Defaults to env[OS_COMPUTE_API_VERSION].')
+
+        parser.add_argument(
             '--os-cacert',
             metavar='<ca-certificate>',
             default=utils.env('OS_CACERT', default=None),
@@ -228,3 +272,10 @@ class OpenStackProvider(providers.BaseProvider):
                  "SSL (https) requests. The server's certificate will "
                  'not be verified against any certificate authorities. '
                  'This option should be used with caution.')
+
+        parser.add_argument(
+            '--legacy-occi-os',
+            default=False,
+            action='store_true',
+            help="Generate information and ids compatible with OCCI-OS, "
+                 "e.g. using the flavor name instead of the flavor id.")
