@@ -14,10 +14,12 @@ class OpenStackProvider(providers.BaseProvider):
             raise exceptions.OpenStackProviderException(msg)
 
         (os_username, os_password, os_tenant_name, os_auth_url,
-            cacert, insecure, legacy_occi_os) = (opts.os_username,
+            os_api_version, cacert, insecure, legacy_occi_os) = (
+                                                 opts.os_username,
                                                  opts.os_password,
                                                  opts.os_tenant_name,
                                                  opts.os_auth_url,
+                                                 opts.os_api_version,
                                                  opts.os_cacert,
                                                  opts.insecure,
                                                  opts.legacy_occi_os)
@@ -44,13 +46,15 @@ class OpenStackProvider(providers.BaseProvider):
 
         client_cls = novaclient.client.get_client_class('2')
         if insecure:
-            self.api = client_cls(os_username,
+            self.api = client_cls(os_api_version,
+                                  os_username,
                                   os_password,
                                   os_tenant_name,
                                   auth_url=os_auth_url,
                                   insecure=insecure)
         else:
-            self.api = client_cls(os_username,
+            self.api = client_cls(os_api_version,
+                                  os_username,
                                   os_password,
                                   os_tenant_name,
                                   auth_url=os_auth_url,
@@ -215,6 +219,12 @@ class OpenStackProvider(providers.BaseProvider):
             metavar='<auth-url>',
             default=utils.env('OS_AUTH_URL', 'NOVA_URL'),
             help='Defaults to env[OS_AUTH_URL].')
+
+        parser.add_argument(
+            '--os-api-version',
+            metavar='<api-version>',
+            default=utils.env('OS_COMPUTE_API_VERSION', default='2'),
+            help='Defaults to env[OS_COMPUTE_API_VERSION].')
 
         parser.add_argument(
             '--os-cacert',
