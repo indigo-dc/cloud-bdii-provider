@@ -70,6 +70,9 @@ class OpenStackProviderTest(unittest.TestCase):
             def __init__(self, opts):
                 self.api = mock.Mock()
                 self.api.client.auth_url = 'http://foo.example.org:1234/v2'
+                self.ks_api = mock.Mock()
+                self.ks_api.services.list.return_value = {}
+                self.ks_api.endpoints.list.return_value = {}
                 self.static = mock.Mock()
                 self.legacy_occi_os = False
                 self.opts = opts
@@ -294,7 +297,8 @@ class OpenStackProviderTest(unittest.TestCase):
                 'endpoint_occi_api_version': '11.11',
                 'endpoint_openstack_api_version': '99.99',
             }
-            self.provider.api.client.service_catalog.catalog = FAKES.catalog
+            self.provider.ks_api.services.list.return_value = FAKES.catalog
+            self.provider.ks_api.endpoints.list.return_value = FAKES.endpoints
             endpoints = self.provider.get_compute_endpoints()
             assert m_get_endpoint_defaults.called
 
@@ -322,7 +326,8 @@ class OpenStackProviderTest(unittest.TestCase):
             self.provider.static, 'get_compute_endpoint_defaults'
         ) as m_get_endpoint_defaults:
             m_get_endpoint_defaults.return_value = {}
-            self.provider.api.client.service_catalog.catalog = FAKES.catalog
+            self.provider.ks_api.services.list.return_value = FAKES.catalog
+            self.provider.ks_api.endpoints.list.return_value = FAKES.endpoints
             endpoints = self.provider.get_compute_endpoints()
             assert m_get_endpoint_defaults.called
 
