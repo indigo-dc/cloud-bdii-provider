@@ -33,6 +33,7 @@ class OpenStackProvider(providers.BaseProvider):
         # Remove info log messages from output
         logging.getLogger('requests').setLevel(logging.WARNING)
         logging.getLogger('keystoneauth').setLevel(logging.WARNING)
+        logging.getLogger('novaclient').setLevel(logging.WARNING)
 
         (os_username, os_password, os_tenant_name, os_auth_url,
             os_api_version, cacert, insecure,
