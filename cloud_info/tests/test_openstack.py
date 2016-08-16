@@ -24,7 +24,8 @@ class OpenStackProviderOptionsTest(unittest.TestCase):
                                   '--os-auth-url', 'http://example.org:5000',
                                   '--os-cacert', 'foobar',
                                   '--insecure',
-                                  '--legacy-occi-os'])
+                                  '--legacy-occi-os',
+                                  '--os-api-version', '2.1'])
 
         self.assertEqual(opts.os_username, 'foo')
         self.assertEqual(opts.os_password, 'bar')
@@ -33,11 +34,13 @@ class OpenStackProviderOptionsTest(unittest.TestCase):
         self.assertEqual(opts.os_cacert, 'foobar')
         self.assertEqual(opts.insecure, True)
         self.assertEqual(opts.legacy_occi_os, True)
+        self.assertEqual(opts.os_api_version, '2.1')
 
     def test_options(self):
         class Opts(object):
             os_username = os_password = os_tenant_name = os_tenant_id = 'foo'
             os_auth_url = 'http://foo.example.org'
+            os_api_version = '2.1'
             os_cacert = None
             insecure = False
             legacy_occi_os = False
@@ -69,8 +72,14 @@ class OpenStackProviderTest(unittest.TestCase):
                 self.api.client.auth_url = 'http://foo.example.org:1234/v2'
                 self.static = mock.Mock()
                 self.legacy_occi_os = False
+                self.opts = opts
 
-        self.provider = FakeProvider(None)
+        class Opts(object):
+            os_auth_url = 'http://foo.example.org:1234/v2'
+            os_api_version = '2.1'
+
+        self.provider = FakeProvider(Opts())
+        self.maxDiff = None
 
     def assert_resources(self, expected, observed, template=None,
                          ignored_fields=[]):
@@ -301,7 +310,7 @@ class OpenStackProviderTest(unittest.TestCase):
                     'endpoint_url': 'https://cloud.example.org:8787/'},
                 '1b7f14c87d8c42ad962f4d3a5fd13a77': {
                     'compute_api_type': 'OpenStack',
-                    'compute_api_version': '2',
+                    'compute_api_version': '2.1',
                     'endpoint_url': 'https://cloud.example.org:8774/v1.1/ce2d'}
             },
             'compute_middleware_developer': 'OpenStack',
