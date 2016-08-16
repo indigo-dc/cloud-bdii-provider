@@ -6,7 +6,7 @@
 
 Summary: Information provider for Cloud Compute and Cloud Storage services for INDIGO
 Name: cloud-info-provider-indigo
-Version: 0.8.5
+Version: 0.9.0
 Release: 1%{?dist}
 Group: Applications/Internet
 License: ASL 2.0
@@ -23,6 +23,7 @@ Requires: python-mako
 Requires: python-requests
 #Recommends: bdii
 #Recommends: python-novaclient
+#Recommends: python-keystoneclient
 BuildArch: noarch
 
 %description
@@ -51,6 +52,8 @@ rm -rf $RPM_BUILD_ROOT
 %config /etc/cloud-info-provider-indigo/
 
 %changelog
+* Tue Aug 16 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.9.0-{%release}
+- Add OpenStack Identity API V3 usage.
 * Tue Aug 04 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.5-{%release}
 - Remove BDII from recommended packages.
 * Wed Aug 03 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.8.4-{%release}
