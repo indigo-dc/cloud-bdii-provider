@@ -15,19 +15,17 @@ class ModuleTest(unittest.TestCase):
         with utils.nested(
             mock.patch.object(cloud_info.core, 'parse_opts'),
             mock.patch('cloud_info.core.CloudBDII'),
-            mock.patch('cloud_info.core.IndigoComputeBDII'),
             mock.patch('cloud_info.core.ComputeBDII'),
             mock.patch('cloud_info.core.StorageBDII')
-        ) as (m0, m1, m2, m3, m4):
+        ) as (m0, m1, m2, m3):
             m0.return_value = None
-            for i in (m1, m2, m3, m4):
+            for i in (m1, m2, m3):
                 i = i.return_value
                 i.render.return_value = 'foo'
 
             self.assertIsNone(cloud_info.core.main())
 
-            # XXX only IndigoComputeBDII is used
-            for i in (m0, m2):
+            for i in (m0, m1, m2, m2, m3):
                 assert i.called
 
 
