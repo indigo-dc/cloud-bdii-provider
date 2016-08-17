@@ -123,7 +123,6 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_templates,
                               templates,
-                              template="execution_environment.ldif",
                               ignored_fields=["compute_service_name"])
 
     def test_get_legacy_templates_with_defaults_from_static(self):
@@ -155,7 +154,6 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_templates,
                               templates,
-                              template="execution_environment.ldif",
                               ignored_fields=["compute_service_name"])
 
     def test_get_templates_with_defaults(self):
@@ -183,7 +181,6 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_templates,
                               templates,
-                              template="execution_environment.ldif",
                               ignored_fields=["compute_service_name"])
 
     def test_get_templates_with_defaults_from_static(self):
@@ -213,7 +210,6 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_templates,
                               templates,
-                              template="execution_environment.ldif",
                               ignored_fields=["compute_service_name"])
 
     def test_get_images(self):
@@ -270,7 +266,6 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_images,
                               images,
-                              template="application_environment.ldif",
                               ignored_fields=["compute_service_name"])
 
     def test_get_endpoints_with_defaults_from_static(self):
