@@ -29,8 +29,8 @@ class SendToCMDB(object):
             logging.getLogger('urllib3').setLevel(logging.WARNING)
 
         self.service_id = None
-        self.remote_images = []
-        self.local_images = []
+        self.remote_images = {}
+        self.local_images = {}
 
     def retrieve_service_id(self):
         url = "%s/service/filters/sitename/%s" % (self.cmdb_read_url_base,
@@ -108,12 +108,13 @@ class SendToCMDB(object):
                     cmdb_image = {}
                     cmdb_image_id = image["id"]
                     cmdb_image_rev = image['doc']['_rev']
+                    cloud_image_id = image['doc']['data']['image_id']
                     for key, val in image["doc"]["data"].iteritems():
                         cmdb_image[key] = val
                     cmdb_image['cmdb_image_id'] = cmdb_image_id
                     cmdb_image['cmdb_image_rev'] = cmdb_image_rev
                     logging.debug(cmdb_image)
-                    self.remote_images.append(cmdb_image)
+                    self.remote_images[cloud_image_id] = cmdb_image
             else:
                 logging.debug("No images for service %s" % self.service_id)
         else:
@@ -127,7 +128,9 @@ class SendToCMDB(object):
         for line in sys.stdin.readlines():
             json_input += line.strip().rstrip('\n')
         # XXX we should exit cleanly if unable to parse stdin as JSON
-        self.local_images = json.loads(json_input)
+        images = json.loads(json_input)
+        for image in images:
+            self.local_images[image['image_id']] = image
         logging.info("Found %s local images" % len(self.local_images))
         logging.debug(json_input)
 
@@ -211,17 +214,14 @@ class SendToCMDB(object):
         images_to_update = []
         images_to_add = []
 
-        remote_images_ids = [img['image_id'] for img in self.remote_images]
-        local_images_ids = [img['image_id'] for img in self.local_images]
-
-        for image in self.local_images:
-            if image['image_id'] not in remote_images_ids:
+        for image_id, image in self.local_images.items():
+            if image['image_id'] not in self.remote_images.keys():
                 images_to_add.append(image)
             else:
                 images_to_update.append(image)
 
-        for image in self.remote_images:
-            if image['image_id'] not in local_images_ids:
+        for image_id, image in self.remote_images.items():
+            if image['image_id'] not in self.local_images.keys():
                 images_to_delete.append(image)
 
         logging.info("Images to import: %s" % len(images_to_add))
