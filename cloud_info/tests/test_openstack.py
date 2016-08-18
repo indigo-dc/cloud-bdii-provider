@@ -123,7 +123,16 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_templates,
                               templates,
-                              ignored_fields=["compute_service_name"])
+                              template="compute_bdii.ldif",
+                              ignored_fields=[
+                                  "compute_service_name",
+                                  "image_name",
+                                  "image_os_family",
+                                  "image_os_name",
+                                  "image_os_version",
+                                  "image_platform",
+                                  "image_version"
+                              ])
 
     def test_get_legacy_templates_with_defaults_from_static(self):
         expected_templates = {}
@@ -154,7 +163,16 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_templates,
                               templates,
-                              ignored_fields=["compute_service_name"])
+                              template="compute_bdii.ldif",
+                              ignored_fields=[
+                                  "compute_service_name",
+                                  "image_name",
+                                  "image_os_family",
+                                  "image_os_name",
+                                  "image_os_version",
+                                  "image_platform",
+                                  "image_version"
+                              ])
 
     def test_get_templates_with_defaults(self):
         expected_templates = {}
@@ -181,7 +199,16 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_templates,
                               templates,
-                              ignored_fields=["compute_service_name"])
+                              template="compute_bdii.ldif",
+                              ignored_fields=[
+                                  "compute_service_name",
+                                  "image_name",
+                                  "image_os_family",
+                                  "image_os_name",
+                                  "image_os_version",
+                                  "image_platform",
+                                  "image_version"
+                              ])
 
     def test_get_templates_with_defaults_from_static(self):
         expected_templates = {}
@@ -210,7 +237,16 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_templates,
                               templates,
-                              ignored_fields=["compute_service_name"])
+                              template="compute_bdii.ldif",
+                              ignored_fields=[
+                                  "compute_service_name",
+                                  "image_name",
+                                  "image_os_family",
+                                  "image_os_name",
+                                  "image_os_version",
+                                  "image_platform",
+                                  "image_version"
+                              ])
 
     def test_get_images(self):
         # XXX move this to a custom class?
@@ -266,6 +302,7 @@ class OpenStackProviderTest(unittest.TestCase):
 
         self.assert_resources(expected_images,
                               images,
+                              template="compute_bdii.ldif",
                               ignored_fields=["compute_service_name"])
 
     def test_get_endpoints_with_defaults_from_static(self):
