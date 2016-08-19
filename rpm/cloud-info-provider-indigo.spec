@@ -6,7 +6,7 @@
 
 Summary: Information provider for Cloud Compute and Cloud Storage services for INDIGO
 Name: cloud-info-provider-indigo
-Version: 0.9.1
+Version: 0.9.2
 Release: 1%{?dist}
 Group: Applications/Internet
 License: ASL 2.0
@@ -51,6 +51,8 @@ rm -rf $RPM_BUILD_ROOT
 %config /etc/cloud-info-provider-indigo/
 
 %changelog
+* Fri Aug 19 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.9.2-{%release}
+- Revert to OpenStack Identity API V2.0 to be compatible with Liberty.
 * Tue Aug 16 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.9.1-{%release}
 - Re-enable all information output.
 * Tue Aug 16 2016 Baptiste Grenier <baptiste.grenier@egi.eu> - 0.9.0-{%release}
