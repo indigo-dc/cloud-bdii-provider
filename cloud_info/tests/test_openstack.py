@@ -342,7 +342,7 @@ class OpenStackProviderTest(unittest.TestCase):
                     'endpoint_url': 'https://cloud.example.org:8787/'},
                 '1b7f14c87d8c42ad962f4d3a5fd13a77': {
                     'compute_api_type': 'OpenStack',
-                    'compute_api_version': '2.1',
+                    'compute_api_version': '2',
                     'endpoint_url': 'https://cloud.example.org:8774/v1.1/ce2d'}
             },
             'compute_middleware_developer': 'OpenStack',
