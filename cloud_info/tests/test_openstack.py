@@ -70,9 +70,6 @@ class OpenStackProviderTest(unittest.TestCase):
             def __init__(self, opts):
                 self.api = mock.Mock()
                 self.api.client.auth_url = 'http://foo.example.org:1234/v2'
-                self.ks_api = mock.Mock()
-                self.ks_api.services.list.return_value = {}
-                self.ks_api.endpoints.list.return_value = {}
                 self.static = mock.Mock()
                 self.legacy_occi_os = False
                 self.opts = opts
@@ -329,8 +326,7 @@ class OpenStackProviderTest(unittest.TestCase):
                 'endpoint_occi_api_version': '11.11',
                 'endpoint_openstack_api_version': '99.99',
             }
-            self.provider.ks_api.services.list.return_value = FAKES.catalog
-            self.provider.ks_api.endpoints.list.return_value = FAKES.endpoints
+            self.provider.api.client.service_catalog.catalog = FAKES.catalog
             endpoints = self.provider.get_compute_endpoints()
             assert m_get_endpoint_defaults.called
 
@@ -346,7 +342,7 @@ class OpenStackProviderTest(unittest.TestCase):
                     'endpoint_url': 'https://cloud.example.org:8787/'},
                 '1b7f14c87d8c42ad962f4d3a5fd13a77': {
                     'compute_api_type': 'OpenStack',
-                    'compute_api_version': '2.1',
+                    'compute_api_version': '2',
                     'endpoint_url': 'https://cloud.example.org:8774/v1.1/ce2d'}
             },
             'compute_middleware_developer': 'OpenStack',
@@ -358,8 +354,7 @@ class OpenStackProviderTest(unittest.TestCase):
             self.provider.static, 'get_compute_endpoint_defaults'
         ) as m_get_endpoint_defaults:
             m_get_endpoint_defaults.return_value = {}
-            self.provider.ks_api.services.list.return_value = FAKES.catalog
-            self.provider.ks_api.endpoints.list.return_value = FAKES.endpoints
+            self.provider.api.client.service_catalog.catalog = FAKES.catalog
             endpoints = self.provider.get_compute_endpoints()
             assert m_get_endpoint_defaults.called
 

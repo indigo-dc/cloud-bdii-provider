@@ -214,106 +214,57 @@ class OpenStackFakes(object):
         )
         self.images = [Image(**i) for i in images]
 
-        Service = collections.namedtuple(
-            'Service',
-            ('name', 'type', 'id', 'enabled'))
+        catalog = (
+            (
+                'nova', 'compute', '1b7f14c87d8c42ad962f4d3a5fd13a77',
+                'https://cloud.example.org:8774/v1.1/ce2d'
+            ),
+            (
+                'ceilometer', 'metering', '5acd54c66f3641fd948fa363fa5c9d0a',
+                'https://cloud.example.org:8777/'
+            ),
+            (
+                'nova-volume', 'volume', '5afb318eedd44a71ab8362cc917f929b',
+                'http://cloudvolume01.example.org:8776/v1/ce2d'
+            ),
+            (
+                'ec2', 'ec2', '93ccd85773d24f238c6f2fab802cfd06',
+                'https://cloud.example.org:8773/services/Admin'
+            ),
+            (
+                'occi', 'occi', '03e087c8fb3b495c9a360bcba3abf914',
+                'https://cloud.example.org:8787/'
+            ),
+            (
+                'keystone', 'identity', '510c45b865ba4f40997b91a85552f3e2',
+                'https://keystone.example.org:35357/v2.0'
+            ),
+            (
+                'glance', 'image', '0ceb45ad3ee84f9ca5c1809b07715d40',
+                'https://glance.example.org:9292/',
+            ),
+        )
 
-        services = (
-            {
-                'name': 'nova',
-                'type': 'compute',
-                'id': '1b7f14c87d8c42ad962f4d3a5fd13a77',
-                'enabled': True
-            },
-            {
-                'name': 'ceilometer',
-                'type': 'metering',
-                'id': '5acd54c66f3641fd948fa363fa5c9d0a',
-                'enabled': True
-            },
-            {
-                'name': 'nova-volume',
-                'type': 'volume',
-                'id': '5afb318eedd44a71ab8362cc917f929b',
-                'enabled': True
-            },
-            {
-                'name': 'ec2',
-                'type': 'ec2',
-                'id': '93ccd85773d24f238c6f2fab802cfd06',
-                'enabled': True
-            },
-            {
-                'name': 'occi',
-                'type': 'occi',
-                'id': '03e087c8fb3b495c9a360bcba3abf914',
-                'enabled': True
-            },
-            {
-                'name': 'keystone',
-                'type': 'identity',
-                'id': '510c45b865ba4f40997b91a85552f3e2',
-                'enabled': True
-            },
-            {
-                'name': 'glance',
-                'type': 'image',
-                'id': '0ceb45ad3ee84f9ca5c1809b07715d40',
-                'enabled': True
+        self.catalog = {
+            'access': {
+                'serviceCatalog': [],
             }
-        )
-        self.catalog = [Service(**i) for i in services]
+        }
 
-        Endpoint = collections.namedtuple(
-            'Endpoit',
-            ('enabled', 'interface', 'service_id', 'url'))
-
-        endpoints = (
-            {
-                'enabled': True,
-                'interface': 'public',
-                'service_id': '1b7f14c87d8c42ad962f4d3a5fd13a77',
-                'url': 'https://cloud.example.org:8774/v1.1/ce2d'
-            },
-            {
-                'enabled': True,
-                'interface': 'public',
-                'service_id': '5acd54c66f3641fd948fa363fa5c9d0a',
-                'url': 'https://cloud.example.org:8777/'
-            },
-            {
-                'enabled': True,
-                'interface': 'public',
-                'service_id': '5afb318eedd44a71ab8362cc917f929b',
-                'url': 'http://cloudvolume01.example.org:8776/v1/ce2d'
-            },
-            {
-                'enabled': True,
-                'interface': 'public',
-                'service_id': '93ccd85773d24f238c6f2fab802cfd06',
-                'url': 'https://cloud.example.org:8773/services/Admin'
-            },
-            {
-                'enabled': True,
-                'interface': 'public',
-                'service_id': '03e087c8fb3b495c9a360bcba3abf914',
-                'url': 'https://cloud.example.org:8787/'
-            },
-            {
-                'enabled': True,
-                'interface': 'public',
-                'service_id': '510c45b865ba4f40997b91a85552f3e2',
-                'url': 'https://keystone.example.org:35357/v2.0'
-            },
-            {
-                'enabled': True,
-                'interface': 'public',
-                'service_id': '0ceb45ad3ee84f9ca5c1809b07715d40',
-                'url': 'https://glance.example.org:9292/'
-            },
-        )
-        self.endpoints = [Endpoint(**i) for i in endpoints]
-
+        for name, type_, id_, url in catalog:
+            service = {
+                'endpoints': [{
+                    'adminURL': url,
+                    'publicURL': url,
+                    'internalURL': url,
+                    'id': id_,
+                    'region': 'RegionOne'
+                }],
+                'endpoints_links': [],
+                'name': name,
+                'type': type_
+            }
+            self.catalog['access']['serviceCatalog'].append(service)
 
 OS_FAKES = OpenStackFakes()
 

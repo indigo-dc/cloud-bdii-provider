@@ -15,36 +15,19 @@ class OpenStackProvider(providers.BaseProvider):
             msg = 'Cannot import novaclient module.'
             raise exceptions.OpenStackProviderException(msg)
 
-        try:
-            import keystoneclient.v3.client as ksclient
-            # TODO(gwarf) implement if we need to keep supporting V2.0
-            # import keystoneclient.v2_0.client as ksclient
-        except ImportError:
-            msg = 'Cannot import keystoneclient.'
-            raise exceptions.OpenStackProviderException(msg)
-
-        try:
-            from keystoneauth1 import identity
-            from keystoneauth1 import session
-        except ImportError:
-            msg = 'Cannot import keystoneauth1.'
-            raise exceptions.OpenStackProviderException(msg)
-
         # Remove info log messages from output
         logging.getLogger('requests').setLevel(logging.WARNING)
-        logging.getLogger('keystoneauth').setLevel(logging.WARNING)
-        logging.getLogger('novaclient').setLevel(logging.WARNING)
 
         (os_username, os_password, os_tenant_name, os_auth_url,
-            os_api_version, cacert, insecure,
-            legacy_occi_os) = (opts.os_username,
-                               opts.os_password,
-                               opts.os_tenant_name,
-                               opts.os_auth_url,
-                               opts.os_api_version,
-                               opts.os_cacert,
-                               opts.insecure,
-                               opts.legacy_occi_os)
+            os_api_version, cacert, insecure, legacy_occi_os) = (
+            opts.os_username,
+            opts.os_password,
+            opts.os_tenant_name,
+            opts.os_auth_url,
+            opts.os_api_version,
+            opts.os_cacert,
+            opts.insecure,
+            opts.legacy_occi_os)
 
         if not os_username:
             msg = ('ERROR, You must provide a username '
@@ -66,28 +49,24 @@ class OpenStackProvider(providers.BaseProvider):
                    'via either --os-auth-url or env[OS_AUTH_URL] ')
             raise exceptions.OpenStackProviderException(msg)
 
-        if os_auth_url.find('v2.0') > -1:
-            auth = identity.Password(auth_url=os_auth_url,
-                                     username=os_username,
-                                     password=os_password,
-                                     project_name=os_tenant_name)
-        else:
-            auth = identity.Password(auth_url=os_auth_url,
-                                     username=os_username,
-                                     password=os_password,
-                                     project_name=os_tenant_name,
-                                     user_domain_id='default',
-                                     project_domain_id='default')
-
+        client_cls = novaclient.client.Client
         if insecure:
-            verify = False
+            self.api = client_cls(os_api_version,
+                                  os_username,
+                                  os_password,
+                                  os_tenant_name,
+                                  auth_url=os_auth_url,
+                                  insecure=insecure)
         else:
-            verify = cacert
+            self.api = client_cls(os_api_version,
+                                  os_username,
+                                  os_password,
+                                  os_tenant_name,
+                                  auth_url=os_auth_url,
+                                  insecure=insecure,
+                                  cacert=cacert)
 
-        sess = session.Session(auth=auth, verify=verify)
-        self.api = novaclient.client.Client(os_api_version, session=sess)
-        self.ks_api = ksclient.Client(session=sess)
-
+        self.api.authenticate()
         self.static = providers.static.StaticProvider(opts)
         self.legacy_occi_os = legacy_occi_os
 
@@ -96,37 +75,33 @@ class OpenStackProvider(providers.BaseProvider):
             'endpoints': {},
             'compute_middleware_developer': 'OpenStack',
             'compute_middleware': 'OpenStack Nova',
-            'compute_service_name': self.opts.os_auth_url,
+            'compute_service_name': self.api.client.auth_url,
         }
 
         defaults = self.static.get_compute_endpoint_defaults(prefix=True)
+        catalog = self.api.client.service_catalog.catalog
 
-        catalog = self.ks_api.services.list(enabled=True)
-
-        endpoints = self.ks_api.endpoints.list(enabled=True,
-                                               interface='public')
-        for service in catalog:
-            if service.type == 'occi':
+        endpoints = catalog['access']['serviceCatalog']
+        for endpoint in endpoints:
+            if endpoint['type'] == 'occi':
                 e_type = 'OCCI'
                 e_version = defaults.get('endpoint_occi_api_version', '1.1')
-            elif service.type == 'compute':
+            elif endpoint['type'] == 'compute':
                 e_type = 'OpenStack'
-                e_version = defaults.get('endpoint_openstack_api_version',
-                                         self.opts.os_api_version)
+                e_version = defaults.get('endpoint_openstack_api_version', '2')
             else:
                 continue
 
-            for endpoint in endpoints:
-                if endpoint.service_id == service.id:
-                    e_id = endpoint.service_id
-                    e_url = endpoint.url
+            for ept in endpoint['endpoints']:
+                e_id = ept['id']
+                e_url = ept['publicURL']
 
-                    e = defaults.copy()
-                    e.update({'endpoint_url': e_url,
-                              'compute_api_type': e_type,
-                              'compute_api_version': e_version})
+                e = defaults.copy()
+                e.update({'endpoint_url': e_url,
+                          'compute_api_type': e_type,
+                          'compute_api_version': e_version})
 
-                    ret['endpoints'][e_id] = e
+                ret['endpoints'][e_id] = e
 
         return ret
 
