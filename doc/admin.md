@@ -9,6 +9,13 @@ For running the cloud-provider in a production environment, depending on your
 setup you will might need for OpenStack to install python-novaclient,
 and python-keystoneclient.
 
+For the INDIGO release 1, the supported OpenStack middleware is Liberty, and
+the endpoint should use the v2.0 OpenStack Identity API.
+v3 OpenStack Identity API is available in the mitaka_keystoneauth branch, and
+will be merged to master later.
+
+Supported OS are Ubuntu Trusty and CentOS 7.
+
 ## Binary packages
 
 Packages are available at the [INDIGO repository](http://repo.indigo-datacloud.eu).
@@ -18,6 +25,9 @@ Use the appropriate repository for your distribution and install using the usual
 * RHEL 7 package: cloud-info-provider-indigo
 
 ## Installing using the indigo.cloud-info-provider Ansible role
+
+Using ansible will be the easyest way of testing, it only needs to have
+Ansible 2.X available.
 
 ### Installing [indigo.cloud-info-provider Ansible role](https://galaxy.ansible.com/indigo-dc/cloud-info-provider/)
 
@@ -35,7 +45,7 @@ For OpenNebula middleware on an CentOS system:
     - role: indigo-dc.cloud-info-provider
       cloud_info_provider_sitename: TEST
       cloud_info_provider_middleware: indigoon
-      cloud_info_provider_setup_cron: true
+      cloud_info_provider_setup_cron: false
       # OpenNebula configuration
       cloud_info_provider_on_auth: oneadmin:opennebula
       cloud_info_provider_on_xmlrpc_url: http://127.0.0.1:2633/RPC2
@@ -56,7 +66,7 @@ For OpenStack middleware on an Ubuntu system:
     - role: indigo-dc.cloud-info-provider
       cloud_info_provider_sitename: TEST
       cloud_info_provider_middleware: openstack
-      cloud_info_provider_setup_cron: true
+      cloud_info_provider_setup_cron: false
       # OpenStack configuration
       cloud_info_provider_os_username: admin
       cloud_info_provider_os_password: openstack

@@ -9,13 +9,17 @@ templates based on thier file extension.
 Templates should be available inside the directory ```--template-dir```
 (default: ```/etc/cloud-info-provider-indigo/templates```)
 
-The ```--yaml-file``` (default ```/etc/cloud-info-provider/static.yaml``` allows
+The ```--yaml-file``` (default ```/etc/cloud-info-provider-indigo/static.yaml``` allows
 to set some static values (see sample.static.yaml for a complete example with comments).
 
-Simple example of ```/etc/cloud-info-provider/static.yaml``` for an opennebula
+Simple example of ```/etc/cloud-info-provider-indigo/static.yaml``` for an opennebula
 endpoint:
 
-For OpenNebula the endpoints section is required, but for OpenStack it can be omitted.
+For OpenNebula the endpoints section is required, but for OpenStack it can be
+omitted.
+For other templates (ie ldif) some more information might need to be added to
+the `static.yaml` file, see the examples available inside the
+`/etc/cloud-info-provider-indigo` directory.
 
 ``` yaml
 site:
@@ -47,17 +51,23 @@ listing of options.
 
 For example for OpenStack, use a command line similar to the following:
 ```
-cloud-info-provider-indigo-service --middleware openstack \
-  --os-username <username> --os-password <password> \
-  --os-tenant-name <tenant> --os-auth-url <auth-url>
+cloud-info-provider-indigo-service \
+  --middleware openstack \
+  --os-username <username> \
+  --os-password <password> \
+  --os-tenant-name <tenant> \
+  --os-auth-url <auth-url>
 ```
+The auth-url should be something like this: ` http://192.168.56.101:5000/v2.0 `.
 
 For example for OpenNebula, use a command line similar to the following:
 ```
-cloud-info-provider-indigo-service --middleware indigoon \
+cloud-info-provider-indigo-service \
+  --middleware indigoon \
   --on-auth <username>:<password> \
   --on-rpcxml-endpoint <rpc-xml-endpoint>
 ```
+The rpc-xml-endpoint should be something like this: ` http://localhost:2633/RPC2 `.
 
 ## Running the provider in a cloud resource middleware
 
@@ -67,32 +77,47 @@ nova service is needed; for OpenNebula access to the XML endpoint is required.
 
 ## Importing cloud middleware information inside an INDIGO CMDB.
 
-The provided ```send-to-cmdb``` python script allows to interact with the CMDB 
+The provided ```send-to-cmdb``` python script allows to interact with the CMDB.
 It will expect JON from its standard input and use CMDB API to import/update
 information about images available in the cloud middleware.
 
 ``` sh
-cloud-info-provider-indigo-service --middleware openstack \
-  --os-username <username> --os-password <password> \
-  --os-tenant-name <tenant> --os-auth-url <auth-url> 2> /dev/null \
-  | send-to-cmdb --cmdb-user <cmdb-user> \
-  --cmdb-password <cmdb-password> --sitename <sitename> -v
+cloud-info-provider-indigo-service \
+  --middleware openstack \
+  --os-username <username> \
+  --os-password <password> \
+  --os-tenant-name <tenant> \
+  --os-auth-url <auth-url> \
+  | send-to-cmdb \
+  --cmdb-user <cmdb-user> \
+  --cmdb-password <cmdb-password> \
+  --sitename <sitename>
 ```
 
 Real example
 
 ``` sh
-cloud-info-provider-indigo-service --middleware openstack \
-  --os-username admin --os-tenant-name demo \
+cloud-info-provider-indigo-service \
+  --middleware openstack \
+  --os-username admin \
+  --os-tenant-name demo \
   --os-password openstack \
-  --os-auth-url http://192.168.56.101:5000/v2.0 2> /dev/null \
-  | send-to-cmdb --cmdb-user cmdb_user --cmdb-password \
-  cmdb_password --sitename CYFRONET-CLOUD -v
+  --os-auth-url http://192.168.56.101:5000/v2.0 \
+  | send-to-cmdb \
+  --cmdb-user cmdb_user \
+  --cmdb-password cmdb_password \
+  --sitename CYFRONET-CLOUD \
+  --delete-non-local-images \
+  -v
 ```
 
 Use ```send-to-cmdb --help``` to see the list of available options
 (```--cmdb-read-endpoint``` and ```--cmdb-write-endpoint``` allowing to specify
 CMDB endpoints).
+
+The ` --delete-non-local-images ` send-to-cmdb parameter will delete images in
+the CMDB that are not present in the configured cloud, when testing it,
+checking the vervbose `-v` output might be useful.
 
 **Test the generation of the output before importing the provider output to the CMDB!**
 
