@@ -29,8 +29,8 @@ class SendToCMDB(object):
             logging.getLogger('urllib3').setLevel(logging.WARNING)
 
         self.service_id = None
-        self.remote_images = []
-        self.local_images = []
+        self.remote_images = {}
+        self.local_images = {}
 
     def retrieve_service_id(self):
         url = "%s/service/filters/sitename/%s" % (self.cmdb_read_url_base,
@@ -95,8 +95,8 @@ class SendToCMDB(object):
             logging.error("Response %s" % r.text)
 
     def retrieve_remote_images(self):
-        url = "%s/service/id/%s/has_many/images" % (self.cmdb_read_url_base,
-                                                    self.service_id)
+        url = "%s/service/id/%s/has_many/images?include_docs=true" % (
+              self.cmdb_read_url_base, self.service_id)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             json_answer = r.json()
@@ -107,13 +107,14 @@ class SendToCMDB(object):
                 for image in json_images:
                     cmdb_image = {}
                     cmdb_image_id = image["id"]
-                    image_id = image["value"]["image_id"]
-                    for key, val in image["value"].iteritems():
+                    cmdb_image_rev = image['doc']['_rev']
+                    cloud_image_id = image['doc']['data']['image_id']
+                    for key, val in image["doc"]["data"].iteritems():
                         cmdb_image[key] = val
                     cmdb_image['cmdb_image_id'] = cmdb_image_id
-                    cmdb_image['image_id'] = image_id
+                    cmdb_image['cmdb_image_rev'] = cmdb_image_rev
                     logging.debug(cmdb_image)
-                    self.remote_images.append(cmdb_image)
+                    self.remote_images[cloud_image_id] = cmdb_image
             else:
                 logging.debug("No images for service %s" % self.service_id)
         else:
@@ -127,7 +128,9 @@ class SendToCMDB(object):
         for line in sys.stdin.readlines():
             json_input += line.strip().rstrip('\n')
         # XXX we should exit cleanly if unable to parse stdin as JSON
-        self.local_images = json.loads(json_input)
+        images = json.loads(json_input)
+        for image in images:
+            self.local_images[image['image_id']] = image
         logging.info("Found %s local images" % len(self.local_images))
         logging.debug(json_input)
 
@@ -145,6 +148,7 @@ class SendToCMDB(object):
     def submit_image(self, image):
         image_name = image["image_name"]
         image['service'] = self.service_id
+        cmdb_image_id = None
 
         url = self.cmdb_write_url
         headers = {'Content-Type': 'application/json'}
@@ -165,10 +169,11 @@ class SendToCMDB(object):
             image_rev = json_answer['rev']
             logging.info("Successfully imported image %s as %s rev %s" %
                          (image_name, cmdb_image_id, image_rev))
-            self.purge_image_old_revisions(image, cmdb_image_id)
         else:
             logging.error("Unable to submit image: %s" % r.status_code)
             logging.error("Response %s" % r.text)
+
+        return cmdb_image_id
 
     def purge_image_old_revisions(self, image, cmdb_image_id):
         image_name = image['image_name']
@@ -201,26 +206,43 @@ class SendToCMDB(object):
             logging.error("Response %s" % r.text)
 
     def update_remote_images(self):
-        # TODO(gwarf) store both kind of images using a common type
+        # TODO(gwarf) store both kind of images using a common type/structure
         self.retrieve_local_images()
         self.retrieve_remote_images()
 
-        images_to_delete = self.remote_images
-        # TODO(gwarf) compute list of images
+        images_to_delete = []
         images_to_update = []
-        images_to_add = self.local_images
+        images_to_add = []
+
+        for image_id, image in self.local_images.items():
+            if image['image_id'] not in self.remote_images.keys():
+                images_to_add.append(image)
+            else:
+                images_to_update.append(image)
+
+        for image_id, image in self.remote_images.items():
+            if image['image_id'] not in self.local_images.keys():
+                images_to_delete.append(image)
+
+        logging.info("Images to import: %s" % len(images_to_add))
+        logging.info("Images to update: %s" % len(images_to_update))
+        logging.info("Images to delete: %s" % len(images_to_delete))
 
         for image in images_to_add:
             self.submit_image(image)
 
         for image in images_to_update:
-            # XXX check if update might be preferable
-            self.purge_image(image)
-            self.submit_image(image)
+            # XXX check if update/PUT might be preferable
+            cmdb_image_id = self.submit_image(image)
+            if cmdb_image_id:
+                self.purge_image_old_revisions(image, cmdb_image_id)
 
         if self.delete_non_local_images:
             for image in images_to_delete:
-                self.purge_image(image)
+                image_name = image['image_name']
+                cmdb_image_id = image['cmdb_image_id']
+                cmdb_image_rev = image['cmdb_image_rev']
+                self.purge_image(image_name, cmdb_image_id, cmdb_image_rev)
 
 
 def parse_opts():

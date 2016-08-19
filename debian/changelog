@@ -1,3 +1,9 @@
+python-cloud-info-provider-indigo (0.9.1) trusty; urgency=medium
+
+  * Re-enable all infmration output.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Thu, 16 Aug 2016 16:26:42 +0200
+
 python-cloud-info-provider-indigo (0.9.0) trusty; urgency=medium
 
   * Add OpenStack Identity API V3 usage.
