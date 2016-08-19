@@ -20,14 +20,14 @@ class OpenStackProvider(providers.BaseProvider):
 
         (os_username, os_password, os_tenant_name, os_auth_url,
             os_api_version, cacert, insecure, legacy_occi_os) = (
-                                                 opts.os_username,
-                                                 opts.os_password,
-                                                 opts.os_tenant_name,
-                                                 opts.os_auth_url,
-                                                 opts.os_api_version,
-                                                 opts.os_cacert,
-                                                 opts.insecure,
-                                                 opts.legacy_occi_os)
+            opts.os_username,
+            opts.os_password,
+            opts.os_tenant_name,
+            opts.os_auth_url,
+            opts.os_api_version,
+            opts.os_cacert,
+            opts.insecure,
+            opts.legacy_occi_os)
 
         if not os_username:
             msg = ('ERROR, You must provide a username '
