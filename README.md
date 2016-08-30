@@ -3,7 +3,12 @@
 [![BuildStatus](https://travis-ci.org/indigo-dc/cloud-info-provider.svg?branch=master)](https://travis-ci.org/indigo-dc/cloud-info-provider)
 
 The Cloud Information provider generates a representation of cloud resources,
-to be published inside INDIGO CMDB.
+to be published inside INDIGO Configuration Management DataBase (CMDB).
+
+The INDIGO CMDB is a REST service storing all the information about the cloud
+sites available and providing details such as the images and containers they
+support. It is used as an authoritative source of information for matchmaking
+and orchestration of VM and containers.
 
 The generated representation is described using a
 [Mako](http://www.makotemplates.org/) template having access to the cloud
