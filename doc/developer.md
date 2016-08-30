@@ -20,7 +20,7 @@ cd cloud-info-provider
 pip install .
 ```
 
-## Buliding package on Ubuntu
+## Building package on Ubuntu
 
 ``` sh
 sudo apt install devscripts build-essential debhelper python-all python-all-dev python-pbr python-setuptools python-support
@@ -37,3 +37,15 @@ python setup.py sdist
 cp dist/cloud_provider_indigo-*.tar.gz ~/rpmbuild/SOURCES
 rpmbuild -ba rpm/cloud-info-provider-indigo.spec
 ```
+
+## Contributing to the project
+
+Push Requests are more than welcome, the standard
+[GitHub](https://guides.github.com/introduction/flow/index.html) flow will be
+used.
+
+The main steps for getting code integrated are the following:
+* Fork the repository
+* Work on a feature (eventually in a dedicated feature branch)
+* Submit a PR (PR have to be made against the latest version of master)
+* PR will be tested, discussed, validated and merged
