@@ -1,3 +1,9 @@
+python-cloud-info-provider-indigo (0.9.3) trusty; urgency=medium
+
+  * Hide verbose output for some dependencies (urllib3 and novaclient).
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Tue, 13 Sep 2016 18:40:42 +0200
+
 python-cloud-info-provider-indigo (0.9.2) trusty; urgency=medium
 
   * Revert to OpenStack Identity API V2.0 to be compatible with Liberty.
