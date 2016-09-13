@@ -2,3 +2,4 @@ Mako
 PyYAML
 six
 requests
+pbr
