@@ -70,6 +70,10 @@ class OpenStackProvider(providers.BaseProvider):
         self.static = providers.static.StaticProvider(opts)
         self.legacy_occi_os = legacy_occi_os
 
+    def get_compute_shares(self):
+        # XXX Once possible implement dynamic retrieval of shares
+        return self.static.get_compute_shares()
+
     def get_compute_endpoints(self):
         ret = {
             'endpoints': {},
