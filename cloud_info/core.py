@@ -90,6 +90,7 @@ class ComputeBDII(BaseBDII):
 
     def render(self):
         endpoints = self._get_info_from_providers('get_compute_endpoints')
+        shares = self._get_info_from_providers('get_compute_shares')
 
         if not endpoints.get('endpoints'):
             return ''
@@ -115,6 +116,7 @@ class ComputeBDII(BaseBDII):
         info.update({'static_compute_info': static_compute_info})
         info.update({'templates': templates})
         info.update({'images': images})
+        info.update({'shares': shares})
 
         return self._format_template('compute', info)
 
