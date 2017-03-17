@@ -127,6 +127,7 @@ class OpenStackProvider(providers.BaseProvider):
             template_id = '%s%s#%s' % (URI, tpl_sch,
                                        OpenStackProvider.occify(flavor_id))
             aux.update({'template_id': template_id,
+                        'template_native_id': flavor_id,
                         'template_memory': flavor.ram,
                         'template_cpu': flavor.vcpus,
                         'template_disk': flavor.disk})
@@ -142,6 +143,7 @@ class OpenStackProvider(providers.BaseProvider):
             'image_version': None,
             'image_marketplace_id': None,
             'image_id': None,
+            'image_native_id': None,
             'image_os_family': None,
             'image_os_name': None,
             'image_os_version': None,
@@ -165,6 +167,7 @@ class OpenStackProvider(providers.BaseProvider):
             # metadata
             aux_img.update({
                 'image_name': image.name,
+                'image_native_id': image.id,
                 'image_id': '%s%s#%s' % (URI, img_sch,
                                          OpenStackProvider.occify(image.id))
             })
