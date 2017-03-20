@@ -77,7 +77,7 @@ class OpenStackProvider(providers.BaseProvider):
     def get_compute_endpoints(self):
         ret = {
             'endpoints': {},
-            'compute_middleware_developer': 'OpenStack',
+            'compute_middleware_developer': 'OpenStack Foundation',
             'compute_middleware': 'OpenStack Nova',
             'compute_service_name': self.api.client.auth_url,
         }
