@@ -108,7 +108,7 @@ class OpenStackProvider(providers.BaseProvider):
             if endpoint['type'] == 'occi':
                 e_type = 'OCCI'
                 e_developer = 'CSIC'
-                e_middleware = 'OOI'
+                e_middleware = 'ooi'
             elif endpoint['type'] == 'compute':
                 e_type = 'OpenStack'
                 e_developer = 'OpenStack Foundation'
