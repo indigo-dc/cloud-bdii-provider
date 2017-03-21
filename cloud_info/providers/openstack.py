@@ -1,8 +1,13 @@
 import logging
 
+import re
+import requests
+
 from cloud_info import exceptions
 from cloud_info import providers
 from cloud_info import utils
+
+from six.moves.urllib.parse import urlparse
 
 
 class OpenStackProvider(providers.BaseProvider):
@@ -15,10 +20,17 @@ class OpenStackProvider(providers.BaseProvider):
             msg = 'Cannot import novaclient module.'
             raise exceptions.OpenStackProviderException(msg)
 
+        try:
+            import keystoneclient.v2_0.client as ksclient
+        except ImportError:
+            msg = 'Cannot import keystoneclient module.'
+            raise exceptions.OpenStackProviderException(msg)
+
         # Remove info log messages from output
         logging.getLogger('requests').setLevel(logging.WARNING)
         logging.getLogger('urllib3').setLevel(logging.WARNING)
         logging.getLogger('novaclient.client').setLevel(logging.WARNING)
+        logging.getLogger('keystoneclient').setLevel(logging.WARNING)
 
         (os_username, os_password, os_tenant_name, os_auth_url,
          cacert, insecure, legacy_occi_os) = (opts.os_username,
@@ -70,6 +82,14 @@ class OpenStackProvider(providers.BaseProvider):
         self.static = providers.static.StaticProvider(opts)
         self.legacy_occi_os = legacy_occi_os
 
+        # Retrieve a keystone authentication token
+        # XXX to be used as main authentication mean
+        self.keystone = ksclient.Client(auth_url=os_auth_url,
+                                    username=os_username,
+                                    password=os_password,
+                                    tenant_name=os_tenant_name)
+        self.auth_token = self.keystone.auth_token
+
     def get_compute_shares(self):
         # XXX Once possible implement dynamic retrieval of shares
         return self.static.get_compute_shares()
@@ -89,16 +109,36 @@ class OpenStackProvider(providers.BaseProvider):
         for endpoint in endpoints:
             if endpoint['type'] == 'occi':
                 e_type = 'OCCI'
-                e_version = defaults.get('endpoint_occi_api_version', '1.1')
             elif endpoint['type'] == 'compute':
                 e_type = 'OpenStack'
-                e_version = defaults.get('endpoint_openstack_api_version', '2')
             else:
                 continue
 
             for ept in endpoint['endpoints']:
                 e_id = ept['id']
                 e_url = ept['publicURL']
+                if e_type == 'OCCI':
+                    e_version = defaults.get('endpoint_occi_api_version', '1.1')
+                    try:
+                        headers = {'X-Auth-token': self.auth_token}
+                        request_url = "%s/-/" % e_url
+                        r = requests.get(request_url, headers=headers)
+                        if r.status_code == requests.codes.ok:
+                            header_server = r.headers['Server']
+                            e_version = re.search(r'OCCI/([0-9.]+)',
+                                                  header_server).group(1)
+                    except requests.exceptions.RequestException as e:
+                        pass
+                    except IndexError as e:
+                        pass
+                else:
+                    e_version = defaults.get('endpoint_openstack_api_version',
+                                             'v2')
+                    try:
+                        # TODO(gwarf) Retrieve using API programatically
+                        e_version = urlparse(e_url).path.split('/')[1]
+                    except Exception as e:
+                        pass
 
                 e = defaults.copy()
                 e.update({'compute_endpoint_url': e_url,
