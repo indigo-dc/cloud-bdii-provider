@@ -3,3 +3,7 @@ PyYAML
 six
 pbr
 defusedxml
+# For OpenStack
+#requests
+#keystoneclient
+#novaclient
