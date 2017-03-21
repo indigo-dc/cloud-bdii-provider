@@ -97,8 +97,6 @@ class OpenStackProvider(providers.BaseProvider):
     def get_compute_endpoints(self):
         ret = {
             'endpoints': {},
-            'compute_middleware_developer': 'OpenStack Foundation',
-            'compute_middleware': 'OpenStack Nova',
             'compute_service_name': self.api.client.auth_url,
         }
 
@@ -109,8 +107,12 @@ class OpenStackProvider(providers.BaseProvider):
         for endpoint in endpoints:
             if endpoint['type'] == 'occi':
                 e_type = 'OCCI'
+                e_developer = 'CSIC'
+                e_middleware = 'OOI'
             elif endpoint['type'] == 'compute':
                 e_type = 'OpenStack'
+                e_developer = 'OpenStack Foundation'
+                e_middleware = 'OpenStack Nova'
             else:
                 continue
 
@@ -127,11 +129,15 @@ class OpenStackProvider(providers.BaseProvider):
                             header_server = r.headers['Server']
                             e_version = re.search(r'OCCI/([0-9.]+)',
                                                   header_server).group(1)
+                            e_middleware_version = re.search(r'ooi/([0-9.]+)',
+                                                  header_server).group(1)
                     except requests.exceptions.RequestException as e:
                         pass
                     except IndexError as e:
                         pass
                 else:
+                    e_middleware_version = defaults.get(
+                            'compute_middleware_version', 'Mitaka')
                     e_version = defaults.get('endpoint_openstack_api_version',
                                              'v2')
                     try:
@@ -142,6 +148,9 @@ class OpenStackProvider(providers.BaseProvider):
 
                 e = defaults.copy()
                 e.update({'compute_endpoint_url': e_url,
+                          'compute_middleware_developer': e_developer,
+                          'compute_middleware': e_middleware,
+                          'compute_middleware_version': e_middleware_version,
                           'compute_api_type': e_type,
                           'compute_api_version': e_version})
 
