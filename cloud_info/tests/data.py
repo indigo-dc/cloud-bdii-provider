@@ -280,12 +280,12 @@ class OpenStackFakes(object):
                     'adminURL': url,
                     'publicURL': url,
                     'internalURL': url,
-                    'id': id_,
+                    'id': id,
                     'region': 'RegionOne'
                 }],
                 'endpoints_links': [],
                 'name': name,
-                'type': type_
+                'type': type
             }
             self.catalog['access']['serviceCatalog'].append(service)
 
