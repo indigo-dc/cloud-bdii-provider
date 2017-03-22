@@ -96,6 +96,7 @@ class OpenStackProviderTest(unittest.TestCase):
                 'template_memory': f.ram,
                 'template_cpu': f.vcpus,
                 'template_id': '%s#%s' % (url, name),
+                'template_native_id': "%s" % f.name,
                 'template_platform': 'amd64',
                 'template_network': 'private',
                 'template_disk': f.disk,
@@ -137,6 +138,7 @@ class OpenStackProviderTest(unittest.TestCase):
                 'template_memory': f.ram,
                 'template_cpu': f.vcpus,
                 'template_id': '%s#%s' % (url, name),
+                'template_native_id': "%s" % f.id,
                 'template_platform': 'i686',
                 'template_network': 'private',
                 'template_disk': f.disk,
@@ -179,6 +181,7 @@ class OpenStackProviderTest(unittest.TestCase):
                 'template_memory': f.ram,
                 'template_cpu': f.vcpus,
                 'template_id': '%s#%s' % (url, f.id),
+                'template_native_id': "%s" % f.id,
                 'template_platform': 'amd64',
                 'template_network': 'private',
                 'template_disk': f.disk,
@@ -218,6 +221,7 @@ class OpenStackProviderTest(unittest.TestCase):
                 'template_memory': f.ram,
                 'template_cpu': f.vcpus,
                 'template_id': '%s#%s' % (url, f.id),
+                'template_native_id': "%s" % f.id,
                 'template_platform': 'i686',
                 'template_network': 'private',
                 'template_disk': f.disk,
@@ -261,7 +265,8 @@ class OpenStackProviderTest(unittest.TestCase):
                 'image_platform': 'amd64',
                 'image_version': None,
                 'image_marketplace_id': None,
-                'image_id': 'http://schemas.openstack.org/template/os#bar_id'
+                'image_id': 'http://schemas.openstack.org/template/os#bar_id',
+                'image_native_id': 'bar id',
             },
             'foo.id': {
                 'image_description': None,
@@ -272,7 +277,8 @@ class OpenStackProviderTest(unittest.TestCase):
                 'image_platform': 'amd64',
                 'image_version': None,
                 'image_marketplace_id': 'http://example.org/',
-                'image_id': 'http://schemas.openstack.org/template/os#foo-id'
+                'image_id': 'http://schemas.openstack.org/template/os#foo-id',
+                'image_native_id': 'foo.id',
             },
             'baz id': {
                 'image_description': None,
@@ -284,6 +290,7 @@ class OpenStackProviderTest(unittest.TestCase):
                 'image_version': None,
                 'image_marketplace_id': None,
                 'image_id': 'http://schemas.openstack.org/template/os#baz_id',
+                'image_native_id': 'baz id',
                 'docker_id': 'sha1:xxxxxxxxxxxxxxxxxxxxxxxxxx',
                 'docker_tag': 'latest',
                 'docker_name': 'test/image'
