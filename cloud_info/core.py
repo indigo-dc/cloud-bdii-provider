@@ -130,6 +130,10 @@ class ComputeBDII(BaseBDII):
                                                       {'os_tenant_name':
                                                           project})
 
+            instances = self._get_info_from_providers('get_instances',
+                                                      {'os_tenant_name':
+                                                          project})
+
             for template_id, template in templates.items():
                 template.update(static_compute_info)
 
@@ -138,6 +142,7 @@ class ComputeBDII(BaseBDII):
 
             share['images'] = images
             share['templates'] = templates
+            share['instances'] = instances
 
         info.update({'static_compute_info': static_compute_info})
         info.update({'endpoints': endpoints})
