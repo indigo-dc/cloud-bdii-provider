@@ -61,6 +61,10 @@ class OpenStackProvider(providers.BaseProvider):
                    'via either --os-auth-url or env[OS_AUTH_URL] ')
             raise exceptions.OpenStackProviderException(msg)
 
+        # Hide urllib3 warnings when allowing unverified connection
+        if insecure:
+            requests.packages.urllib3.disable_warnings()
+
         client_cls = novaclient.client.Client
         if insecure:
             self.api = client_cls(2,
