@@ -208,8 +208,9 @@ class OpenStackProvider(providers.BaseProvider):
             aux.update({'template_id': template_id,
                         'template_native_id': flavor_id,
                         'template_memory': flavor.ram,
-                        'template_cpu': flavor.vcpus,
-                        'template_disk': flavor.disk})
+                        'template_ephemeral': flavor.ephemeral,
+                        'template_disk': flavor.disk,
+                        'template_cpu': flavor.vcpus})
             flavors[flavor.id] = aux
         return flavors
 
