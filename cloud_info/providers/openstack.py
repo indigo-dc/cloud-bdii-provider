@@ -227,6 +227,12 @@ class OpenStackProvider(providers.BaseProvider):
             'image_os_name': None,
             'image_os_version': None,
             'image_platform': 'amd64',
+            'image_recommended_ram': None,
+            'image_recommended_cpu': None,
+            'image_minimal_ram': None,
+            'image_minimal_cpu': None,
+            'image_size': None,
+            'image_default_username': None,
         }
         defaults = self.static.get_image_defaults(prefix=True)
         img_sch = defaults.get('image_schema', 'os')
@@ -251,6 +257,10 @@ class OpenStackProvider(providers.BaseProvider):
                                          OpenStackProvider.occify(image.id))
             })
 
+            # TODO(gwarf) Ensure that *_{ram,cpu} are set
+            # TODO(gwarf) Ensure that architecture is set
+            # TODO(gwarf) Ensure that image_size is set
+            # TODO(gwarf) Ensure that image_default_username is set
             for name, value in image.metadata.items():
                 aux_img[name] = value
 
