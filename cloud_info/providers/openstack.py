@@ -2,11 +2,13 @@ import logging
 
 import re
 import requests
+import socket
 
 from cloud_info import exceptions
 from cloud_info import providers
 from cloud_info import utils
 
+from OpenSSL import SSL
 from six.moves.urllib.parse import urlparse
 
 
@@ -85,6 +87,8 @@ class OpenStackProvider(providers.BaseProvider):
         self.api.authenticate()
         self.static = providers.static.StaticProvider(opts)
         self.legacy_occi_os = legacy_occi_os
+        self.insecure = insecure
+        self.cacert = cacert
 
         # Retrieve a keystone authentication token
         # XXX to be used as main authentication mean
@@ -138,6 +142,64 @@ class OpenStackProvider(providers.BaseProvider):
 
         return ret
 
+    def _get_endpoint_ca_information(self, endpoint_url):
+        ca_info = {
+                'issuer': 'UNKNOWN',
+                'trusted_cas': [ 'UNKNOWN' ],
+                }
+
+        if self.insecure:
+            verify = SSL.VERIFY_NONE
+        else:
+            verify = SSL.VERIFY_PEER
+
+        try:
+            scheme = urlparse(endpoint_url).scheme
+            host = urlparse(endpoint_url).hostname
+            port = urlparse(endpoint_url).port
+
+            if scheme == 'https':
+                ctx = SSL.Context(SSL.SSLv23_METHOD)
+                ctx.set_options(SSL.OP_NO_SSLv2)
+                ctx.set_options(SSL.OP_NO_SSLv3)
+                ctx.set_verify(verify, lambda conn, cert, errnum, depth, ok: ok)
+                if not self.insecure:
+                   ctx.load_verify_locations(self.cacert)
+
+                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client.connect((host, port))
+
+                print("Connected to %s" % client.getpeername)
+
+                client_ssl = SSL.Connection(ctx, client)
+                client_ssl.set_connect_state()
+                #client_ssl.connect((host, port))
+                client_ssl.send('0')
+                #client_ssl.set_tlsext_host_name(host)
+                #client_ssl.do_handshake()
+
+                cert = client_ssl.get_peer_certificate()
+                issuer = cert.get_issuer().commonName
+
+                # XXX Do we want the root issuer cert?
+                # XXX Validate if top-most cert is the last one
+                # cert_chain = client_ssl.get_peer_cert_chain()
+                # last_cert = cert_chain[-1]
+                # issuer = last_cert.get_issuer().commonName
+
+                client_ca_list = client_ssl.get_client_ca_list()
+
+                client_ssl.shutdown()
+                client_ssl.close()
+
+                ca_info['issuer'] = issuer
+                ca_info['trusted_cas'] = client_ca_list
+        except SSL.Error as e:
+            print e.message
+            # pass
+
+        return ca_info
+
     def get_compute_shares(self):
         # FIXME link the share with the corresponding endpoints
         return self.static.get_compute_shares()
@@ -172,6 +234,9 @@ class OpenStackProvider(providers.BaseProvider):
                 for ept in endpoint['endpoints']:
                     e_id = ept['id']
                     e_url = ept['publicURL']
+                    e_cert_info = self._get_endpoint_ca_information(e_url)
+                    e_issuer = e_cert_info['issuer']
+                    e_cas = e_cert_info['trusted_cas']
                     e_versions = self._get_endpoint_versions(e_url, e_type)
                     e_mw_version = e_versions['compute_middleware_version']
                     e_api_version = e_versions['compute_api_version']
@@ -180,6 +245,8 @@ class OpenStackProvider(providers.BaseProvider):
                     e.update(supported_endpoints[e_type])
                     e.update({
                         'compute_endpoint_url': e_url,
+                        'endpoint_issuer': e_issuer,
+                        'endpoint_trusted_cas': e_cas,
                         'compute_middleware_version': e_mw_version,
                         'compute_api_version': e_api_version,
                         })
