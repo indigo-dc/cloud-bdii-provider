@@ -87,6 +87,8 @@ class OpenStackProvider(providers.BaseProvider):
         self.api.authenticate()
         self.static = providers.static.StaticProvider(opts)
         self.legacy_occi_os = legacy_occi_os
+        self.insecure = insecure
+        self.os_cacert = cacert
 
         # Retrieve a keystone authentication token
         # XXX to be used as main authentication mean
@@ -121,7 +123,11 @@ class OpenStackProvider(providers.BaseProvider):
             try:
                 headers = {'X-Auth-token': self.auth_token}
                 request_url = "%s/-/" % endpoint_url
-                r = requests.get(request_url, headers=headers)
+                if self.insecure:
+                    verify = False
+                else:
+                    verify = self.os_cacert
+                r = requests.get(request_url, headers=headers, verify=verify)
                 if r.status_code == requests.codes.ok:
                     header_server = r.headers['Server']
                     e_middleware_version = re.search(r'ooi/([0-9.]+)',
