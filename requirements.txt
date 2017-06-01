@@ -6,5 +6,5 @@ defusedxml
 # For OpenStack
 #requests
 #pyOpenSSL
-#keystoneclient
+#python-keystoneclient
 #python-novaclient
