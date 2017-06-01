@@ -336,8 +336,11 @@ class OpenStackProvider(providers.BaseProvider):
                             None) == 'application/vnd.openstack.image':
                     link = link['href']
                     break
-            # FIXME(aloga): we need to add the version, etc from
-            # metadata
+
+            # XXX Create an entry for each metatdata attribute, no filtering
+            for name, value in image.metadata.items():
+                aux_img[name] = value
+
             aux_img.update({
                 'image_name': image.name,
                 'image_native_id': image.id,
@@ -345,13 +348,6 @@ class OpenStackProvider(providers.BaseProvider):
                                          OpenStackProvider.occify(image.id))
             })
 
-            # TODO(gwarf) Ensure that *_{ram,cpu} are set
-            # TODO(gwarf) Ensure that architecture is set
-            # TODO(gwarf) Ensure that image_size is set
-            for name, value in image.metadata.items():
-                aux_img[name] = value
-
-            # XXX could probably be move to the mako template
             image_descr = None
             if image.metadata.get('vmcatcher_event_dc_description',
                                   None) is not None:
@@ -369,10 +365,12 @@ class OpenStackProvider(providers.BaseProvider):
                 marketplace_id = link
             else:
                 continue
+
             distro = None
-            distro_version = None
             if image.metadata.get('os_distro', None) is not None:
                 distro = image.metadata['os_distro']
+
+            distro_version = None
             if image.metadata.get('os_version', None) is not None:
                 distro_version = image.metadata['os_version']
 
