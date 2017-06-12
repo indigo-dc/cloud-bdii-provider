@@ -4,13 +4,14 @@ import unittest
 import mock
 
 import cloud_info.core
+from cloud_info.tests import base
 from cloud_info.tests import data
 from cloud_info.tests import utils
 
 DATA = data.DATA
 
 
-class ModuleTest(unittest.TestCase):
+class ModuleTest(base.TestCase):
     def test_main(self):
         with utils.nested(
             mock.patch.object(cloud_info.core, 'parse_opts'),
@@ -37,8 +38,10 @@ class FakeBDIIOpts(object):
     template_extension = ''
 
 
-class BaseTest(unittest.TestCase):
+class BaseTest(base.TestCase):
     def setUp(self):
+        super(BaseTest, self).setUp()
+
         cloud_info.core.SUPPORTED_MIDDLEWARE = {
             'static': mock.MagicMock(),
             'foo middleware': mock.MagicMock(),
