@@ -1,40 +1,49 @@
 import logging
 
 import re
-import requests
 import socket
 
 from cloud_info import exceptions
 from cloud_info import providers
 from cloud_info import utils
 
-from OpenSSL import SSL
 from six.moves.urllib.parse import urlparse
 
-from novaclient.exceptions import Forbidden
+try:
+    import requests
+except ImportError:
+    msg = 'Cannot import requests module.'
+    raise exceptions.OpenStackProviderException(msg)
+
+try:
+    import novaclient.client
+    from novaclient.exceptions import Forbidden
+except ImportError:
+    msg = 'Cannot import novaclient module.'
+    raise exceptions.OpenStackProviderException(msg)
+
+try:
+    import keystoneclient.v2_0.client as ksclient
+except ImportError:
+    msg = 'Cannot import keystoneclient module.'
+    raise exceptions.OpenStackProviderException(msg)
+
+try:
+    from OpenSSL import SSL
+except ImportError:
+    msg = 'Cannot import pyOpenSSL module.'
+    raise exceptions.OpenStackProviderException(msg)
+
+# Remove info log messages from output
+logging.getLogger('requests').setLevel(logging.WARNING)
+logging.getLogger('urllib3').setLevel(logging.WARNING)
+logging.getLogger('novaclient.client').setLevel(logging.WARNING)
+logging.getLogger('keystoneclient').setLevel(logging.WARNING)
 
 
 class OpenStackProvider(providers.BaseProvider):
     def __init__(self, opts):
         super(OpenStackProvider, self).__init__(opts)
-
-        try:
-            import novaclient.client
-        except ImportError:
-            msg = 'Cannot import novaclient module.'
-            raise exceptions.OpenStackProviderException(msg)
-
-        try:
-            import keystoneclient.v2_0.client as ksclient
-        except ImportError:
-            msg = 'Cannot import keystoneclient module.'
-            raise exceptions.OpenStackProviderException(msg)
-
-        # Remove info log messages from output
-        logging.getLogger('requests').setLevel(logging.WARNING)
-        logging.getLogger('urllib3').setLevel(logging.WARNING)
-        logging.getLogger('novaclient.client').setLevel(logging.WARNING)
-        logging.getLogger('keystoneclient').setLevel(logging.WARNING)
 
         (os_username, os_password, os_tenant_name, os_auth_url,
          cacert, insecure, legacy_occi_os) = (opts.os_username,

@@ -11,3 +11,5 @@ mock
 requests
 pyOpenSSL
 python-novaclient
+python-keystoneclient
+defusedxml
