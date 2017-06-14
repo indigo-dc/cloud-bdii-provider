@@ -248,6 +248,7 @@ class OpenStackProvider(providers.BaseProvider):
             e_type = endpoint['type']
             if e_type in supported_endpoints:
                 for ept in endpoint['endpoints']:
+                    # XXX for one ID there is one enpoint URL per project
                     e_id = ept['id']
                     e_url = ept['publicURL']
                     # Use keystone SSL information
@@ -261,13 +262,14 @@ class OpenStackProvider(providers.BaseProvider):
                     e.update(supported_endpoints[e_type])
                     e.update({
                         'compute_endpoint_url': e_url,
+                        'endpoint_id': e_id,
                         'endpoint_issuer': e_issuer,
                         'endpoint_trusted_cas': e_cas,
                         'compute_middleware_version': e_mw_version,
                         'compute_api_version': e_api_version,
                         })
 
-                    ret['endpoints'][e_id] = e
+                    ret['endpoints'][e_url] = e
 
         return ret
 
