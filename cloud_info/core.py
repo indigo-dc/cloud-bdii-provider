@@ -1,18 +1,18 @@
 import argparse
 import os.path
 
-import cloud_info.providers.opennebula
-import cloud_info.providers.openstack
-import cloud_info.providers.static
+from cloud_info import exceptions
+from cloud_info import importutils
 
 import mako.template
 
 SUPPORTED_MIDDLEWARE = {
-    'openstack': cloud_info.providers.openstack.OpenStackProvider,
-    'opennebula': cloud_info.providers.opennebula.OpenNebulaProvider,
-    'indigoon': cloud_info.providers.opennebula.IndigoONProvider,
-    'opennebularocci': cloud_info.providers.opennebula.OpenNebulaROCCIProvider,
-    'static': cloud_info.providers.static.StaticProvider,
+    'openstack': 'cloud_info.providers.openstack.OpenStackProvider',
+    'opennebula': 'cloud_info.providers.opennebula.OpenNebulaProvider',
+    'indigoon': 'cloud_info.providers.opennebula.IndigoONProvider',
+    'opennebularocci': 'cloud_info.providers.opennebula.'
+                       'OpenNebulaROCCIProvider',
+    'static': 'cloud_info.providers.static.StaticProvider',
 }
 
 
@@ -25,11 +25,17 @@ class BaseBDII(object):
 
         if (opts.middleware != 'static' and
                 opts.middleware in SUPPORTED_MIDDLEWARE):
-            self.dynamic_provider = SUPPORTED_MIDDLEWARE[opts.middleware](opts)
+            provider_cls = importutils.import_class(
+                SUPPORTED_MIDDLEWARE[opts.middleware]
+            )
+            self.dynamic_provider = provider_cls(opts)
         else:
             self.dynamic_provider = None
 
-        self.static_provider = SUPPORTED_MIDDLEWARE['static'](opts)
+        provider_cls = importutils.import_class(
+            SUPPORTED_MIDDLEWARE['static']
+        )
+        self.static_provider = provider_cls(opts)
 
     def load_templates(self):
         self.templates_files = {}
@@ -39,12 +45,12 @@ class BaseBDII(object):
                                          '%s.%s' % (tpl, template_extension))
             self.templates_files[tpl] = template_file
 
-    def _get_info_from_providers(self, method):
+    def _get_info_from_providers(self, method, **provider_kwargs):
         info = {}
         for i in (self.static_provider, self.dynamic_provider):
             if not i:
                 continue
-            result = getattr(i, method)()
+            result = getattr(i, method)(**provider_kwargs)
             info.update(result)
         return info
 
@@ -89,32 +95,68 @@ class ComputeBDII(BaseBDII):
         self.templates = ['compute']
 
     def render(self):
-        endpoints = self._get_info_from_providers('get_compute_endpoints')
+        info = {}
 
-        if not endpoints.get('endpoints'):
-            return ''
-
+        # Retrieve global site information
+        # XXX Validate if really project agnostic
+        # XXX Here it uses the "default" project from the CLI parameters
         site_info = self._get_info_from_providers('get_site_info')
+
+        # Get shares / projects and related images and templates
+        shares = self._get_info_from_providers('get_compute_shares')
+
+        for share_id, share in shares.items():
+            project = share['project']
+
+            endpoints = self._get_info_from_providers('get_compute_endpoints',
+                                                      os_project_name=project)
+
+            if not endpoints.get('endpoints'):
+                return ''
+
+            # Collect static information for endpoints
+            static_compute_info = dict(endpoints, **site_info)
+            static_compute_info.pop('endpoints')
+
+            # Add same static information to all endpoints
+            for url, endpoint in endpoints['endpoints'].items():
+                endpoint.update(static_compute_info)
+
+            images = self._get_info_from_providers('get_images',
+                                                   os_project_name=project)
+
+            templates = self._get_info_from_providers('get_templates',
+                                                      os_project_name=project)
+
+            instances = self._get_info_from_providers('get_instances',
+                                                      os_project_name=project)
+
+            quotas = self._get_info_from_providers('get_compute_quotas',
+                                                   os_project_name=project)
+
+            for template_id, template in templates.items():
+                template.update(static_compute_info)
+
+            for image_id, image in images.items():
+                image.update(static_compute_info)
+
+            share['images'] = images
+            share['templates'] = templates
+            share['instances'] = instances
+            share['endpoints'] = endpoints
+            share['quotas'] = quotas
+
+        # XXX Avoid creating a new list
+        endpoints = {endpoint_id: endpoint for share_id, share in
+                     shares.items() for endpoint_id,
+                     endpoint in share['endpoints'].items()}
+
+        # XXX Avoid redoing what was done in the previous shares loop
         static_compute_info = dict(endpoints, **site_info)
         static_compute_info.pop('endpoints')
 
-        templates = self._get_info_from_providers('get_templates')
-        images = self._get_info_from_providers('get_images')
-
-        for url, endpoint in endpoints['endpoints'].items():
-            endpoint.update(static_compute_info)
-
-        for template_id, template in templates.items():
-            template.update(static_compute_info)
-
-        for image_id, image in images.items():
-            image.update(static_compute_info)
-
-        info = {}
-        info.update({'endpoints': endpoints})
         info.update({'static_compute_info': static_compute_info})
-        info.update({'templates': templates})
-        info.update({'images': images})
+        info.update({'shares': shares})
 
         return self._format_template('compute', info)
 
@@ -192,7 +234,17 @@ def parse_opts():
     for provider_name, provider in SUPPORTED_MIDDLEWARE.items():
         group = parser.add_argument_group('%s provider options' %
                                           provider_name)
-        provider.populate_parser(group)
+
+        # NOTE(aloga): importing the class may fail because of missing
+        # dependencies, so we skip those options. This is not the best option,
+        # as those options will not be present until the dependencies are
+        # satisfied...
+        try:
+            provider = importutils.import_class(provider)
+            provider.populate_parser(group)
+        except (exceptions.OpenStackProviderException,
+                exceptions.OpenNebulaProviderException):
+            pass
 
     return parser.parse_args()
 

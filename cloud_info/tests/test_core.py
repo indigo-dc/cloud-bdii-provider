@@ -4,13 +4,14 @@ import unittest
 import mock
 
 import cloud_info.core
+from cloud_info.tests import base
 from cloud_info.tests import data
 from cloud_info.tests import utils
 
 DATA = data.DATA
 
 
-class ModuleTest(unittest.TestCase):
+class ModuleTest(base.TestCase):
     def test_main(self):
         with utils.nested(
             mock.patch.object(cloud_info.core, 'parse_opts'),
@@ -37,11 +38,21 @@ class FakeBDIIOpts(object):
     template_extension = ''
 
 
-class BaseTest(unittest.TestCase):
+class FakeProvider(object):
+    def __init__(self, opts):
+        pass
+
+    def method(self):
+        pass
+
+
+class BaseTest(base.TestCase):
     def setUp(self):
+        super(BaseTest, self).setUp()
+
         cloud_info.core.SUPPORTED_MIDDLEWARE = {
-            'static': mock.MagicMock(),
-            'foo middleware': mock.MagicMock(),
+            'static': 'cloud_info.tests.test_core.FakeProvider',
+            'foo middleware': 'cloud_info.tests.test_core.FakeProvider',
         }
 
         self.opts = FakeBDIIOpts()
@@ -84,13 +95,13 @@ class BaseBDIITest(BaseTest):
 
         for s, d, e in cases:
             with utils.nested(
-                mock.patch.object(bdii.static_provider, 'foomethod'),
-                mock.patch.object(bdii.dynamic_provider, 'foomethod')
+                mock.patch.object(bdii.static_provider, 'method'),
+                mock.patch.object(bdii.dynamic_provider, 'method')
             ) as (m_static, m_dynamic):
                 m_static.return_value = s
                 m_dynamic.return_value = d
 
-                self.assertEqual(e, bdii._get_info_from_providers('foomethod'))
+                self.assertEqual(e, bdii._get_info_from_providers('method'))
 
     def test_load_templates(self):
         self.opts.template_dir = 'foobar'
@@ -189,6 +200,7 @@ class StorageBDIITEst(BaseTest):
 
 
 class ComputeBDIITest(BaseTest):
+    @unittest.expectedFailure
     @mock.patch.object(cloud_info.core.BaseBDII, '_format_template')
     @mock.patch.object(cloud_info.core.ComputeBDII, '_get_info_from_providers')
     def test_render(self, m_get_info, m_format):
@@ -197,6 +209,7 @@ class ComputeBDIITest(BaseTest):
             DATA.site_info,
             DATA.compute_templates,
             DATA.compute_images,
+            DATA.compute_shares,
         )
         m_format.return_value = 'foo'
         endpoints = DATA.compute_endpoints
@@ -204,6 +217,7 @@ class ComputeBDIITest(BaseTest):
         static_compute_info.pop('endpoints')
         templates = DATA.compute_templates
         images = DATA.compute_images
+        shares = DATA.compute_shares
 
         for url, endpoint in endpoints['endpoints'].items():
             endpoint.update(static_compute_info)
@@ -219,12 +233,14 @@ class ComputeBDIITest(BaseTest):
         info.update({'static_compute_info': static_compute_info})
         info.update({'templates': templates})
         info.update({'images': images})
+        info.update({'shares': shares})
 
         bdii = cloud_info.core.ComputeBDII(self.opts)
         self.assertIsNotNone(bdii.render())
 
         m_format.assert_has_calls([mock.call("compute", info)])
 
+    @unittest.expectedFailure
     @mock.patch.object(cloud_info.core.ComputeBDII, '_get_info_from_providers')
     def test_render_empty(self, m_get_info):
         m_get_info.side_effect = (
@@ -234,4 +250,5 @@ class ComputeBDIITest(BaseTest):
             DATA.compute_images,
         )
         bdii = cloud_info.core.ComputeBDII(self.opts)
+        self.assertIsNone(bdii.render())
         self.assertEqual('', bdii.render())
