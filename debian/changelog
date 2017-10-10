@@ -1,3 +1,13 @@
+python-cloud-info-provider (0.9.1-1) xenial; urgency=medium
+
+  [ Alvaro Lopez ]
+  * Keystone Auth v3
+
+  [ Baptiste Grenier ]
+  * GLUE 2.1
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Tue, 10 Oct 2017 15:15:42 +0100
+
 python-cloud-info-provider (0.8.1-1) xenial; urgency=medium
 
   [ Boris Parak ]
